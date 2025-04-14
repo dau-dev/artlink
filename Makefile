@@ -4,13 +4,13 @@
 .PHONY: develop build install
 
 develop:  ## install dependencies and build library
-	python -m pip install -e .[develop]
+	uv pip install -e .[develop]
 
 build:  ## build the python library
 	python -m build -n
 
 install:  ## install library
-	python -m pip install .
+	uv pip install .
 
 #########
 # LINTS #
@@ -86,7 +86,7 @@ dist-build:  # build python dists
 dist-check:  ## run python dist checker with twine
 	python -m twine check dist/*
 
-dist: clean build dist-build dist-check  ## build all dists
+dist: clean dist-build dist-check  ## build all dists
 
 publish: dist  # publish python assets
 

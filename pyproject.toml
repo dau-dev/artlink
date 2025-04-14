@@ -5,7 +5,7 @@ build-backend="hatchling.build"
 [project]
 name = "artlink"
 authors = [{name = "the artlink authors", email = "3105306+timkpaine@users.noreply.github.com"}]
-description="A package for packaging, organizing, and combining artifacts"
+description = "A package for packaging, organizing, and combining artifacts"
 readme = "README.md"
 license = { text = "Apache-2.0" }
 version = "0.1.0"
@@ -14,6 +14,7 @@ keywords = []
 
 classifiers = [
     "Development Status :: 3 - Alpha",
+    "Programming Language :: Python",
     "Programming Language :: Python :: Implementation :: CPython",
     "Programming Language :: Python :: Implementation :: PyPy",
     "Programming Language :: Python :: 3",
@@ -21,13 +22,10 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
 ]
 
 dependencies = []
-
-[project.urls]
-Repository = "https://github.com/dau-dev/artlink"
-Homepage = "https://github.com/dau-dev/artlink"
 
 [project.optional-dependencies]
 develop = [
@@ -39,10 +37,15 @@ develop = [
     "pytest-cov",
     "ruff",
     "twine",
+    "uv",
     "wheel",
 ]
 
 [project.scripts]
+
+[project.urls]
+Repository = "https://github.com/dau-dev/artlink"
+Homepage = "https://github.com/dau-dev/artlink"
 
 [tool.bumpversion]
 current_version = "0.1.0"
@@ -63,7 +66,6 @@ replace = 'version = "{new_version}"'
 ignore = [
     ".copier-answers.yml",
     "Makefile",
-    "setup.py",
     "docs/**/*",
 ]
 
