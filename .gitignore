@@ -139,10 +139,13 @@ js/dist
 js/lib
 js/node_modules
 js/*.tgz
+artlink/extension
 
 # Jupyter
 .ipynb_checkpoints
 .autoversion
+!artlink/extension/artlink.json
+!artlink/extension/install.json
 artlink/nbextension
 artlink/labextension
 
