@@ -146,6 +146,7 @@ artlink/extension
 # Jupyter
 .ipynb_checkpoints
 .autoversion
+Untitled*.ipynb
 !artlink/extension/artlink.json
 !artlink/extension/install.json
 artlink/nbextension
