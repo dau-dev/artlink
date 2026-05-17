@@ -9,5 +9,9 @@ A package for packaging, organizing, and combining artifacts
 
 ## Overview
 
+`artlink` owns the DAU-neutral artifact manifest and bundle model. The current YAML schema is `artlink.artifact-manifest/v0`; it records source artifacts, metadata artifacts, binary artifacts, artifact roles, source languages, provided modules, media types, and optional digests in a Pydantic/JSON-friendly shape.
+
+The bundle loader validates reusable artifact packages before a build system consumes them. It checks missing files, required roles, HDL source availability, unsupported source languages, duplicate module providers, and provenance for artifacts loaded from manifests.
+
 > [!NOTE]
 > This library was generated using [copier](https://copier.readthedocs.io/en/stable/) from the [Base Python Project Template repository](https://github.com/python-project-templates/base).
