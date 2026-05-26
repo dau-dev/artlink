@@ -1,0 +1,24 @@
+schema: artlink.template/v0
+name: hardware-build-inputs
+rules:
+  - name: requires-filter
+    selector:
+      role: hdl-source
+      provides:
+        kind: hdl-module
+        name: filter
+    cardinality:
+      min: 1
+      max: 1
+  - name: requires-constraints
+    selector:
+      role: constraints
+    cardinality:
+      min: 1
+  - name: requires-driver
+    selector:
+      role: driver
+    cardinality:
+      min: 1
+metadata:
+  domain: hardware

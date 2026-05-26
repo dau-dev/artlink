@@ -1,0 +1,10 @@
+schema: artlink.manifest/v0
+name: python-driver
+version: 0.1.0
+intent: bundle
+artifacts:
+  - uri: https://example.invalid/python-driver-0.1.0-py3-none-any.whl
+    role: driver
+references: []
+metadata:
+  domain: software

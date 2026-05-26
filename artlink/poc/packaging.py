@@ -126,7 +126,11 @@ def artifact_manifest_from_mapping(raw: dict[str, Any]) -> ArtifactManifest:
     if not isinstance(raw_artifacts, list):
         raise ArtifactManifestError("artifact manifest artifacts must be a list")
     try:
-        return ArtifactManifest(schema=_required_mapping_str(raw, "schema"), name=_required_mapping_str(raw, "name"), artifacts=tuple(raw_artifacts))
+        return ArtifactManifest(
+            schema=_required_mapping_str(raw, "schema"),
+            name=_required_mapping_str(raw, "name"),
+            artifacts=tuple(raw_artifacts),
+        )
     except ValidationError as exc:
         raise ArtifactManifestError(str(exc)) from exc
 

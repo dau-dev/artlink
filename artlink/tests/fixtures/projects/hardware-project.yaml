@@ -1,0 +1,16 @@
+schema: artlink.manifest/v0
+name: hardware-project
+intent: input
+artifacts: []
+references:
+  - kind: manifest
+    target: hdl-filter
+    version: 2.0.0
+  - kind: manifest
+    target: demo-board
+    version: 1.0.0
+  - kind: manifest
+    target: python-driver
+    version: 0.1.0
+metadata:
+  top: filter

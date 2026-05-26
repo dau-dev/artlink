@@ -1,0 +1,4 @@
+schema: artlink.registry/v0
+allow_manifest_versions: true
+install_roots:
+  - ../installed

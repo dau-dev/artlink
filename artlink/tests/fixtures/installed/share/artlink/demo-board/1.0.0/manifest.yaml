@@ -1,0 +1,10 @@
+schema: artlink.manifest/v0
+name: demo-board
+version: 1.0.0
+intent: bundle
+artifacts:
+  - path: demo.xdc
+    role: constraints
+references: []
+metadata:
+  domain: hardware

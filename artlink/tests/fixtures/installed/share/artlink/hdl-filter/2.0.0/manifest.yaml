@@ -1,0 +1,13 @@
+schema: artlink.manifest/v0
+name: hdl-filter
+version: 2.0.0
+intent: bundle
+artifacts:
+  - path: filter.sv
+    role: hdl-source
+    provides:
+      - kind: hdl-module
+        name: filter
+references: []
+metadata:
+  domain: hardware
