@@ -3,7 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from artlink import ArtifactRegistry, Manifest, Reference, resolve_manifest
-from artlink.domains.docs import DocumentationSiteScheme, ToolRequirement
+from artlink.examples.domains.docs import DocumentationSiteScheme, ToolRequirement
 
 
 def test_documentation_site_scheme_bundles_installs_and_collects_publish_inputs(tmp_path: Path) -> None:

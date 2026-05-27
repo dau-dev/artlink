@@ -5,12 +5,8 @@ from typing import Any
 
 from pydantic import ConfigDict, Field
 
-from ..artifact import Capability, Reference, _ArtlinkModel
-from ..manifest import Manifest
-from ..materialize import MaterializationPlan, PathMaterializationMethod, build_materialization_plan, execute_materialization_plan
-from ..registry import ArtifactRegistry
-from ..resolver import ResolutionPlan
-from .common import (
+from ...artifact import Capability, Reference, _ArtlinkModel
+from ...domains.common import (
     ToolRequirement,
     path_artifacts,
     paths_for_role,
@@ -19,6 +15,10 @@ from .common import (
     tools_from_artifacts,
     unique_parent_dirs,
 )
+from ...manifest import Manifest
+from ...materialize import MaterializationPlan, PathMaterializationMethod, build_materialization_plan, execute_materialization_plan
+from ...registry import ArtifactRegistry
+from ...resolver import ResolutionPlan
 
 __all__ = (
     "ToolRequirement",

@@ -3,7 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from artlink import ArtifactRegistry, Manifest, Reference, resolve_manifest
-from artlink.domains.ml import ModelReleaseScheme, ToolRequirement
+from artlink.examples.domains.ml import ModelReleaseScheme, ToolRequirement
 
 
 def test_model_release_scheme_bundles_installs_and_collects_serving_inputs(tmp_path: Path) -> None:

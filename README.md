@@ -21,6 +21,8 @@ The older `artlink.poc` package is still present as an experimental reference, b
 
 The public model objects inherit from `ccflow.BaseModel`, which keeps them compatible with ccflow/Hydra-style `_target_` instantiation while the YAML helpers emit clean artlink schema files without `_target_` metadata.
 
+Reusable functionality lives in the core modules plus `artlink.domains.common`, `artlink.packages`, `artlink.registry`, and `artlink.cli_tools`. The HDL, Python, model-release, and documentation profiles are intentionally packaged as example domain profiles under `artlink.examples.domains`, not as core artlink policy.
+
 ## Core Concepts
 
 An `Artifact` is a file, directory, URI, generated output, package resource, or logical content item that another tool can consume. It has a broad `kind`, a domain-facing `role`, optional source metadata, optional capabilities in `provides` and `requires`, and optional digest or metadata fields.
@@ -307,6 +309,30 @@ The resolver also detects duplicate capability providers across resolved manifes
 
 Resolution is intentionally separate from materialization. `build_materialization_plan(plan, registry, target_dir=...)` produces a `MaterializationPlan` describing local copy, symlink, archive extraction, package resource, and remote reference actions. `execute_materialization_plan(plan)` performs local filesystem actions while leaving remote references as no-ops.
 
+## Package Archives
+
+`artlink.packages` provides domain-neutral helpers for building discoverable `.tar.gz` artifact packages. A package archive places a manifest under `share/artlink/<type>/<name>/<version>/manifest.yaml` and stores path-based artifacts next to it, so extracting the archive into an install prefix makes it discoverable with `ArtifactRegistry.from_install_path(prefix)`.
+
+```python
+from pathlib import Path
+
+from artlink import ArtifactRegistry, build_package_archive, discover_packages, install_package_archive
+from artlink.examples.domains.docs import DocumentationSiteScheme
+
+scheme = DocumentationSiteScheme(document_globs=("docs/**/*.md",))
+manifest = scheme.bundle(root=Path("."), name="mydocs", version="1.2.3")
+archive = build_package_archive(manifest, artifact_root=Path("."), output_dir=Path("dist"), package_type="docs")
+
+assert archive == Path("dist/mydocs-1.2.3.tar.gz")
+
+install_package_archive(archive, target_dir=Path("/opt/example"))
+registry = ArtifactRegistry.from_install_path(Path("/opt/example"), allow_manifest_versions=True)
+assert registry.get_manifest("mydocs", version="1.2.3")
+assert [package.name for package in discover_packages(Path("/opt/example"), package_type="docs")] == ["mydocs"]
+```
+
+Archive package types are normalized, so `HDL`, `hardware-project`, and `hdl` all map to `hdl`; `documentation-site` maps to `docs`; and `model-release` maps to `ml`. Registry discovery skips non-artlink YAML payload files under `share/artlink`, so docs packages can safely contain files such as `mkdocs.yml`.
+
 ## Hardware Profile Example
 
 Domain profiles are intentionally practical: each one bundles common project files according to a scheme, installs the resolved artifacts, and returns a Python object with the paths and tool requirements a downstream tool needs. They sit on top of the same manifest, registry, resolver, and materializer core; they do not make the core domain-specific.
@@ -317,7 +343,7 @@ The hardware profile collects HDL build inputs for downstream Vivado, simulator,
 from pathlib import Path
 
 from artlink import ArtifactRegistry, Manifest, Reference, resolve_manifest
-from artlink.domains.hdl import HardwareProjectScheme, ToolRequirement
+from artlink.examples.domains.hdl import HardwareProjectScheme, ToolRequirement
 
 scheme = HardwareProjectScheme(
     design_source_globs=("rtl/*.sv",),
@@ -355,7 +381,7 @@ The profile does not generate Tcl, invoke simulators, run pytest, or run Verilat
 from pathlib import Path
 
 from artlink import ArtifactRegistry, Manifest, Reference, resolve_manifest
-from artlink.domains.python import PythonPackageScheme, ToolRequirement
+from artlink.examples.domains.python import PythonPackageScheme, ToolRequirement
 
 scheme = PythonPackageScheme(
     package_source_globs=("src/**/*.py",),
@@ -388,7 +414,7 @@ The integration test builds a real Hatchling project with `python -m build --sdi
 from pathlib import Path
 
 from artlink import ArtifactRegistry, Manifest, Reference, resolve_manifest
-from artlink.domains.ml import ModelReleaseScheme, ToolRequirement
+from artlink.examples.domains.ml import ModelReleaseScheme, ToolRequirement
 
 scheme = ModelReleaseScheme(
     model_globs=("models/*.onnx",),
@@ -422,7 +448,7 @@ This profile does not evaluate or serve a model. It prepares the resolved artifa
 from pathlib import Path
 
 from artlink import ArtifactRegistry, Manifest, Reference, resolve_manifest
-from artlink.domains.docs import DocumentationSiteScheme, ToolRequirement
+from artlink.examples.domains.docs import DocumentationSiteScheme, ToolRequirement
 
 scheme = DocumentationSiteScheme(
     config_globs=("mkdocs.yml",),
@@ -452,8 +478,8 @@ The profile does not run MkDocs, Sphinx, or a publisher. It gives those tools th
 
 ```python
 from artlink.cli_tools import SchemeCliCommand, run_packaging_cli
-from artlink.domains.hdl import HardwareProjectScheme
-from artlink.domains.python import PythonPackageScheme
+from artlink.examples.domains.hdl import HardwareProjectScheme
+from artlink.examples.domains.python import PythonPackageScheme
 
 
 def main() -> int:
@@ -473,6 +499,20 @@ my-packager install python --manifest build/my-python-package.yaml --target-dir 
 ```
 
 `bundle` scans the requested root and writes manifest YAML. `install` loads a manifest, resolves it through an `ArtifactRegistry`, materializes the files, and optionally emits the typed collection as JSON. CLI-generated manifests record the scanned `artifact_root` in manifest metadata so a local bundle/install command pair can write the manifest outside the scanned tree and still resolve relative artifact paths. For portable installed manifests, keep the manifest next to its payload under `share/artlink` or pass `--root` explicitly during install.
+
+## Top-Level CLI
+
+The package also installs an `artlink` command for end-to-end packaging and registry smoke tests over the bundled example profiles. It is deliberately small: it packages a project into a discoverable tarball, installs a tarball into a prefix, and lists discoverable packages.
+
+```bash
+artlink package --type docs --root . --name mydocs --version 1.2.3 --output-dir dist
+artlink install dist/mydocs-1.2.3.tar.gz --target-dir /opt/example
+artlink registry --root /opt/example --type HDL --format json
+```
+
+`artlink package --type docs` uses `DocumentationSiteScheme`; `--type HDL` uses `HardwareProjectScheme`; `--type ml` uses `ModelReleaseScheme`; and `--type python` uses `PythonPackageScheme`. The generated archive name is always `<name>-<version>.tar.gz` after path-safe normalization.
+
+`artlink registry` lists all discovered artlink packages below the install root. The optional `--type` filter uses the same package type normalization as archive creation, so `--type=HDL`, `--type=hardware`, and `--type=hdl` select the same package class.
 
 This is the first step toward the broader artlink flow:
 
