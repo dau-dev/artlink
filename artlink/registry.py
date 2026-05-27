@@ -11,7 +11,7 @@ import yaml
 from pydantic import Field, PrivateAttr, ValidationError, model_validator
 
 from .artifact import Artifact, ArtlinkError, CapabilityValue, Reference, _ArtlinkModel, has_capability
-from .manifest import Manifest, load_manifest
+from .manifest import ARTLINK_MANIFEST_SCHEMA, Manifest, load_manifest
 from .template import Template, load_template
 
 __all__ = (
@@ -196,6 +196,8 @@ class ArtifactRegistry(_ArtlinkModel):
             for path in sorted(manifest_dir.rglob(pattern)):
                 if path in discovered or not path.is_file():
                     continue
+                if not _is_artlink_manifest_file(path):
+                    continue
                 discovered.add(path)
                 self.register_manifest_file(path, root=None if root is None else Path(root))
         return self
@@ -359,6 +361,14 @@ def _validate_registry_schema(raw: dict[str, Any]) -> dict[str, Any]:
     normalized = dict(raw)
     normalized.pop("schema")
     return normalized
+
+
+def _is_artlink_manifest_file(path: Path) -> bool:
+    try:
+        raw = yaml.safe_load(path.read_text(encoding="utf-8"))
+    except yaml.YAMLError:
+        return False
+    return isinstance(raw, dict) and raw.get("schema") == ARTLINK_MANIFEST_SCHEMA
 
 
 def _install_prefix(root: Path | None = None) -> Path:

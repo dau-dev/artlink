@@ -5,7 +5,7 @@ from pathlib import Path
 
 from artlink import load_manifest
 from artlink.cli_tools import SchemeCliCommand, run_packaging_cli
-from artlink.domains.python import PythonPackageScheme, ToolRequirement
+from artlink.examples.domains.python import PythonPackageScheme, ToolRequirement
 
 
 def test_packaging_cli_tools_bundle_install_and_emit_collection_json(tmp_path: Path) -> None:

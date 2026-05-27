@@ -1,6 +1,7 @@
 from .artifact import *
 from .manifest import *
 from .materialize import *
+from .packages import *
 from .registry import *
 from .resolver import *
 from .template import *

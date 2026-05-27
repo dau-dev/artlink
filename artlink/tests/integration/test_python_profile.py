@@ -5,7 +5,7 @@ import sys
 from pathlib import Path
 
 from artlink import ArtifactRegistry, Manifest, Reference, resolve_manifest
-from artlink.domains.python import PythonPackageScheme, ToolRequirement
+from artlink.examples.domains.python import PythonPackageScheme, ToolRequirement
 
 
 def test_python_package_scheme_collects_hatch_built_distributions(tmp_path: Path) -> None:

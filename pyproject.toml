@@ -53,6 +53,7 @@ develop = [
 ]
 
 [project.scripts]
+artlink = "artlink.cli:main"
 
 [project.urls]
 Repository = "https://github.com/dau-dev/artlink"
@@ -141,3 +142,9 @@ section-order = [
     "F401",
     "F403",
 ]
+
+[tool.yardang]
+title = "artlink"
+root = "README.md"
+pages = []
+use-autoapi = false

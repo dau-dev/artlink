@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from artlink import ArtifactRegistry, Manifest, Reference, build_materialization_plan, execute_materialization_plan, resolve_manifest
-from artlink.domains.hdl import HardwareProjectScheme, ToolRequirement
+from artlink.examples.domains.hdl import HardwareProjectScheme, ToolRequirement
 
 
 def test_hardware_project_scheme_bundles_installs_and_collects_build_inputs(tmp_path: Path) -> None:
