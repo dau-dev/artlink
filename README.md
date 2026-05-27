@@ -17,8 +17,6 @@ The current core schemas are:
 - `artlink.template/v0` for declarative manifest validation templates.
 - `artlink.registry/v0` for registry configuration.
 
-The older `artlink.poc` package is still present as an experimental reference, but it is not the compatibility target for new work.
-
 The public model objects inherit from `ccflow.BaseModel`, which keeps them compatible with ccflow/Hydra-style `_target_` instantiation while the YAML helpers emit clean artlink schema files without `_target_` metadata.
 
 Reusable functionality lives in the core modules plus `artlink.domains.common`, `artlink.packages`, `artlink.registry`, and `artlink.cli_tools`. The HDL, Python, model-release, and documentation profiles are intentionally packaged as example domain profiles under `artlink.examples.domains`, not as core artlink policy.
