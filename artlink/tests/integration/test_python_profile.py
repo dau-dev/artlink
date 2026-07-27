@@ -36,8 +36,7 @@ packages = ["src/demo_pkg"]
         [sys.executable, "-m", "build", "--sdist", "--wheel", "--no-isolation", "--outdir", "dist"],
         cwd=project_root,
         check=True,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
+        capture_output=True,
         text=True,
     )
 

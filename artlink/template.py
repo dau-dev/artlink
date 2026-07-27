@@ -12,15 +12,15 @@ from .manifest import Manifest
 
 __all__ = (
     "ARTLINK_TEMPLATE_SCHEMA",
-    "TemplateError",
     "ArtifactSelector",
     "Cardinality",
+    "Template",
+    "TemplateError",
     "TemplateRule",
     "ValidationIssue",
     "ValidationResult",
-    "Template",
-    "template_from_mapping",
     "load_template",
+    "template_from_mapping",
 )
 
 
@@ -113,9 +113,7 @@ class Cardinality(_TemplateModel):
     def allows(self, count: int) -> bool:
         if count < self.min:
             return False
-        if self.max is not None and count > self.max:
-            return False
-        return True
+        return not (self.max is not None and count > self.max)
 
     def describe_failure(self, count: int) -> str:
         if count < self.min:
@@ -218,7 +216,7 @@ class Template(_TemplateModel):
         return yaml.safe_dump(self.model_dump(mode="json"), sort_keys=False)
 
     @classmethod
-    def load(cls, path: Path) -> "Template":
+    def load(cls, path: Path) -> Template:
         return load_template(path)
 
 

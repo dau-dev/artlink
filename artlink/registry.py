@@ -15,15 +15,15 @@ from .manifest import ARTLINK_MANIFEST_SCHEMA, Manifest, load_manifest
 from .template import Template, load_template
 
 __all__ = (
-    "ARTLINK_REGISTRY_SCHEMA",
     "ARTLINK_INSTALL_SUBDIR",
     "ARTLINK_MANIFEST_ENTRY_POINT_GROUP",
+    "ARTLINK_REGISTRY_SCHEMA",
     "MANIFEST_INSTALL_SUBDIR",
-    "RegistryError",
-    "ManifestRegistryEntry",
-    "TemplateRegistryEntry",
-    "ArtifactRegistryEntry",
     "ArtifactRegistry",
+    "ArtifactRegistryEntry",
+    "ManifestRegistryEntry",
+    "RegistryError",
+    "TemplateRegistryEntry",
     "artlink_install_dir",
     "load_registry",
     "manifest_install_dir",
@@ -102,7 +102,7 @@ class ArtifactRegistry(_ArtlinkModel):
         source: str = "explicit",
         root: Path | None = None,
         allow_manifest_versions: bool = False,
-    ) -> "ArtifactRegistry":
+    ) -> ArtifactRegistry:
         registry = cls(allow_manifest_versions=allow_manifest_versions)
         for manifest in manifests:
             registry.register_manifest(manifest, source=source, root=root)
@@ -116,17 +116,17 @@ class ArtifactRegistry(_ArtlinkModel):
         source: str | None = None,
         root: Path | None = None,
         allow_manifest_versions: bool = False,
-    ) -> "ArtifactRegistry":
+    ) -> ArtifactRegistry:
         registry = cls(allow_manifest_versions=allow_manifest_versions)
         for path in paths:
             registry.register_manifest_file(path, source=source, root=root)
         return registry
 
     @classmethod
-    def from_install_path(cls, root: Path | None = None, *, allow_manifest_versions: bool = False) -> "ArtifactRegistry":
+    def from_install_path(cls, root: Path | None = None, *, allow_manifest_versions: bool = False) -> ArtifactRegistry:
         return cls(allow_manifest_versions=allow_manifest_versions).discover_install_path(root)
 
-    def register_manifest(self, manifest: Manifest, *, source: str = "explicit", root: Path | None = None) -> "ArtifactRegistry":
+    def register_manifest(self, manifest: Manifest, *, source: str = "explicit", root: Path | None = None) -> ArtifactRegistry:
         manifest_key = (manifest.name, manifest.version)
         registration_root = Path(root) if root is not None else None
         if manifest_key in self._manifests or (not self.allow_manifest_versions and self._entries_for_name(manifest.name)):
@@ -136,13 +136,13 @@ class ArtifactRegistry(_ArtlinkModel):
             self.register_artifact(artifact, source=source, manifest_name=manifest.name, manifest_version=manifest.version, root=registration_root)
         return self
 
-    def register_manifest_file(self, path: Path, *, source: str | None = None, root: Path | None = None) -> "ArtifactRegistry":
+    def register_manifest_file(self, path: Path, *, source: str | None = None, root: Path | None = None) -> ArtifactRegistry:
         manifest_path = Path(path)
         manifest_source = source or manifest_path.as_posix()
         registration_root = manifest_path.parent if root is None else Path(root)
         return self.register_manifest(load_manifest(manifest_path), source=manifest_source, root=registration_root)
 
-    def register_template(self, template: Template, *, source: str = "explicit", root: Path | None = None) -> "ArtifactRegistry":
+    def register_template(self, template: Template, *, source: str = "explicit", root: Path | None = None) -> ArtifactRegistry:
         template_key = (template.name, template.version)
         registration_root = Path(root) if root is not None else None
         if template_key in self._templates or (not self.allow_template_versions and self._template_entries_for_name(template.name)):
@@ -150,7 +150,7 @@ class ArtifactRegistry(_ArtlinkModel):
         self._templates[template_key] = TemplateRegistryEntry(template=template, source=source, root=registration_root)
         return self
 
-    def register_template_file(self, path: Path, *, source: str | None = None, root: Path | None = None) -> "ArtifactRegistry":
+    def register_template_file(self, path: Path, *, source: str | None = None, root: Path | None = None) -> ArtifactRegistry:
         template_path = Path(path)
         template_source = source or template_path.as_posix()
         registration_root = template_path.parent if root is None else Path(root)
@@ -164,7 +164,7 @@ class ArtifactRegistry(_ArtlinkModel):
         manifest_name: str = "",
         manifest_version: str = "",
         root: Path | None = None,
-    ) -> "ArtifactRegistry":
+    ) -> ArtifactRegistry:
         registration_root = Path(root) if root is not None else None
         self._artifacts.append(
             ArtifactRegistryEntry(
@@ -177,7 +177,7 @@ class ArtifactRegistry(_ArtlinkModel):
         )
         return self
 
-    def discover_install_path(self, root: Path | None = None) -> "ArtifactRegistry":
+    def discover_install_path(self, root: Path | None = None) -> ArtifactRegistry:
         install_prefix = _install_prefix(root)
         return self.discover_manifest_files(artlink_install_dir(install_prefix))
 
@@ -187,7 +187,7 @@ class ArtifactRegistry(_ArtlinkModel):
         *,
         patterns: tuple[str, ...] = _MANIFEST_FILE_PATTERNS,
         root: Path | None = None,
-    ) -> "ArtifactRegistry":
+    ) -> ArtifactRegistry:
         manifest_dir = Path(directory)
         if not manifest_dir.exists():
             return self
@@ -207,7 +207,7 @@ class ArtifactRegistry(_ArtlinkModel):
         *,
         group: str = ARTLINK_MANIFEST_ENTRY_POINT_GROUP,
         entry_points: Any | None = None,
-    ) -> "ArtifactRegistry":
+    ) -> ArtifactRegistry:
         for entry_point in _select_entry_points(group=group, entry_points=entry_points):
             source = f"entry-point:{entry_point.name}"
             value = entry_point.load()

@@ -12,12 +12,12 @@ from .registry import ArtifactRegistry, ManifestRegistryEntry, RegistryError, Te
 from .template import Template
 
 __all__ = (
-    "ResolutionError",
-    "ProviderConflictPolicy",
     "CapabilityProvider",
+    "ProviderConflictPolicy",
+    "ResolutionEdge",
+    "ResolutionError",
     "ResolutionIssue",
     "ResolutionNode",
-    "ResolutionEdge",
     "ResolutionPlan",
     "resolve_manifest",
 )
