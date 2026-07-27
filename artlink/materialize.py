@@ -13,9 +13,9 @@ from .registry import ArtifactRegistry, ArtifactRegistryEntry, RegistryError
 from .resolver import ResolutionPlan
 
 __all__ = (
+    "MaterializationAction",
     "MaterializationError",
     "MaterializationMethod",
-    "MaterializationAction",
     "MaterializationPlan",
     "MaterializationResult",
     "build_materialization_plan",

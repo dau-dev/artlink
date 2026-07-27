@@ -8,13 +8,13 @@ from ccflow.base import BaseModel
 from pydantic import ConfigDict, Field, ValidationError, field_serializer, field_validator, model_validator
 
 __all__ = (
-    "ArtlinkError",
-    "ManifestError",
-    "Digest",
-    "Capability",
-    "ArtifactInferenceIssue",
-    "Reference",
     "Artifact",
+    "ArtifactInferenceIssue",
+    "ArtlinkError",
+    "Capability",
+    "Digest",
+    "ManifestError",
+    "Reference",
     "artifact_inference_issues",
     "capability_from_value",
     "has_capability",
@@ -199,7 +199,7 @@ class Artifact(_ManifestModel):
         return tuple(value)
 
     @model_validator(mode="after")
-    def _validate_location(self) -> "Artifact":
+    def _validate_location(self) -> Artifact:
         if self.path is None and not self.uri:
             raise ValueError("artifact must declare a path or uri")
         return self

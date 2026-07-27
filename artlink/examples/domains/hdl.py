@@ -21,9 +21,9 @@ from ...registry import ArtifactRegistry
 from ...resolver import ResolutionPlan
 
 __all__ = (
-    "ToolRequirement",
     "HardwareDesignCollection",
     "HardwareProjectScheme",
+    "ToolRequirement",
 )
 
 
