@@ -1,4 +1,4 @@
-from artlink import *  # noqa
+from artlink import *
 
 
 def test_all():

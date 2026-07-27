@@ -12,8 +12,8 @@ __all__ = (
     "ARTLINK_MANIFEST_SCHEMA",
     "Manifest",
     "artifact_path",
-    "manifest_from_mapping",
     "load_manifest",
+    "manifest_from_mapping",
     "validate_artifact_files",
 )
 
@@ -61,7 +61,7 @@ class Manifest(_ManifestModel):
         return self
 
     @classmethod
-    def compose(cls, *, name: str, manifests: tuple["Manifest", ...], intent: str = "", metadata: dict[str, Any] | None = None) -> "Manifest":
+    def compose(cls, *, name: str, manifests: tuple[Manifest, ...], intent: str = "", metadata: dict[str, Any] | None = None) -> Manifest:
         composed_metadata = dict(metadata or {})
         composed_metadata.setdefault("composed_from", [manifest.name for manifest in manifests])
         artifacts = tuple(artifact for manifest in manifests for artifact in manifest.artifacts)
