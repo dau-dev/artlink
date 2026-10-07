@@ -255,6 +255,18 @@
 <p>The public model objects inherit from <code class="docutils literal notranslate"><span class="pre">ccflow.BaseModel</span></code>, which keeps them compatible with ccflow/Hydra-style <code class="docutils literal notranslate"><span class="pre">_target_</span></code> instantiation while the YAML helpers emit clean artlink schema files without <code class="docutils literal notranslate"><span class="pre">_target_</span></code> metadata.</p>
 <p>Reusable functionality lives in the core modules plus <code class="docutils literal notranslate"><span class="pre">artlink.domains.common</span></code>, <code class="docutils literal notranslate"><span class="pre">artlink.packages</span></code>, <code class="docutils literal notranslate"><span class="pre">artlink.registry</span></code>, and <code class="docutils literal notranslate"><span class="pre">artlink.cli_tools</span></code>. The HDL, Python, model-release, and documentation profiles are intentionally packaged as example domain profiles under <code class="docutils literal notranslate"><span class="pre">artlink.examples.domains</span></code>, not as core artlink policy.</p>
 </section>
+<section id="installation">
+<h2>Installation<a class="headerlink" href="#installation" title="Link to this heading">¶</a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>artlink
+</pre></div>
+</div>
+<p>For development:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/dau-dev/artlink.git
+<span class="nb">cd</span><span class="w"> </span>artlink
+pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span><span class="s2">".[develop]"</span>
+</pre></div>
+</div>
+</section>
 <section id="core-concepts">
 <h2>Core Concepts<a class="headerlink" href="#core-concepts" title="Link to this heading">¶</a></h2>
 <p>An <code class="docutils literal notranslate"><span class="pre">Artifact</span></code> is a file, directory, URI, generated output, package resource, or logical content item that another tool can consume. It has a broad <code class="docutils literal notranslate"><span class="pre">kind</span></code>, a domain-facing <code class="docutils literal notranslate"><span class="pre">role</span></code>, optional source metadata, optional capabilities in <code class="docutils literal notranslate"><span class="pre">provides</span></code> and <code class="docutils literal notranslate"><span class="pre">requires</span></code>, and optional digest or metadata fields.</p>
@@ -318,27 +330,27 @@
 <span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="s">''</span>
 <span class="nt">intent</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">input</span>
 <span class="nt">artifacts</span><span class="p">:</span>
-<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">id</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">filter-rtl</span>
-<span class="w">      </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">''</span>
-<span class="w">      </span><span class="nt">path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">rtl/filter.sv</span>
-<span class="w">      </span><span class="nt">uri</span><span class="p">:</span><span class="w"> </span><span class="s">''</span>
-<span class="w">      </span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">source</span>
-<span class="w">      </span><span class="nt">role</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">hdl-source</span>
-<span class="w">      </span><span class="nt">format</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">sv</span>
-<span class="w">      </span><span class="nt">media_type</span><span class="p">:</span><span class="w"> </span><span class="s">''</span>
-<span class="w">      </span><span class="nt">language</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">systemverilog</span>
-<span class="w">      </span><span class="nt">provides</span><span class="p">:</span>
-<span class="w">                    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">hdl-module</span>
-<span class="w">                        </span><span class="l l-Scalar l-Scalar-Plain">name</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">filter</span>
-<span class="w">      </span><span class="nt">requires</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[]</span>
-<span class="w">      </span><span class="nt">digest</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span>
-<span class="w">      </span><span class="nt">metadata</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{}</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">id</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">filter-rtl</span>
+<span class="w">    </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">''</span>
+<span class="w">    </span><span class="nt">path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">rtl/filter.sv</span>
+<span class="w">    </span><span class="nt">uri</span><span class="p">:</span><span class="w"> </span><span class="s">''</span>
+<span class="w">    </span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">source</span>
+<span class="w">    </span><span class="nt">role</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">hdl-source</span>
+<span class="w">    </span><span class="nt">format</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">sv</span>
+<span class="w">    </span><span class="nt">media_type</span><span class="p">:</span><span class="w"> </span><span class="s">''</span>
+<span class="w">    </span><span class="nt">language</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">systemverilog</span>
+<span class="w">    </span><span class="nt">provides</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">hdl-module</span>
+<span class="w">        </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">filter</span>
+<span class="w">    </span><span class="nt">requires</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[]</span>
+<span class="w">    </span><span class="nt">digest</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span>
+<span class="w">    </span><span class="nt">metadata</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{}</span>
 <span class="nt">references</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[]</span>
 <span class="nt">metadata</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{}</span>
 </pre></div>
 </div>
 <p>Use <code class="docutils literal notranslate"><span class="pre">load_manifest(path)</span></code> to read a manifest and <code class="docutils literal notranslate"><span class="pre">validate_artifact_files(manifest,</span> <span class="pre">root=...)</span></code> when a workflow needs to prove that path-based artifacts exist locally. URI-only artifacts are skipped by local path validation.</p>
-<p>Artifact paths in manifest YAML should be absolute or relative to the directory containing the manifest file. <code class="docutils literal notranslate"><span class="pre">Artifact</span></code> uses Pydantic validation to infer generic fields such as <code class="docutils literal notranslate"><span class="pre">format</span></code> and <code class="docutils literal notranslate"><span class="pre">media_type</span></code> from file paths or URI suffixes when those fields are omitted. Explicit values always win. If an explicit value differs from generic inference, <code class="docutils literal notranslate"><span class="pre">artifact.inference_issues</span></code> reports a warning diagnostic without changing the artifact.</p>
+<p>Artifact paths in manifest YAML are relative to the directory containing the manifest file; an absolute path, or one that climbs out of that directory with <code class="docutils literal notranslate"><span class="pre">..</span></code>, is rejected when the manifest is loaded. An artifact declares either a <code class="docutils literal notranslate"><span class="pre">path</span></code> or a <code class="docutils literal notranslate"><span class="pre">uri</span></code>, never both. <code class="docutils literal notranslate"><span class="pre">Artifact</span></code> uses Pydantic validation to infer generic fields such as <code class="docutils literal notranslate"><span class="pre">format</span></code> and <code class="docutils literal notranslate"><span class="pre">media_type</span></code> from file paths or URI suffixes when those fields are omitted. Explicit values always win. If an explicit value differs from generic inference, <code class="docutils literal notranslate"><span class="pre">artifact.inference_issues</span></code> reports a warning diagnostic without changing the artifact.</p>
 <p>Artifact <code class="docutils literal notranslate"><span class="pre">id</span></code> is optional. Use it when a tool or human needs a stable short handle for an artifact; otherwise artlink falls back to <code class="docutils literal notranslate"><span class="pre">name</span></code> and then location for display and diagnostics. A manifest rejects duplicate artifact locations instead of silently deduplicating them, because two entries with the same path or URI but different roles or metadata are usually an authoring mistake.</p>
 <p>Capabilities in <code class="docutils literal notranslate"><span class="pre">provides</span></code> and <code class="docutils literal notranslate"><span class="pre">requires</span></code> can be written as simple strings or as typed records. A simple selector such as <code class="docutils literal notranslate"><span class="pre">provides:</span> <span class="pre">filter</span></code> matches any capability named <code class="docutils literal notranslate"><span class="pre">filter</span></code>; a typed selector such as <code class="docutils literal notranslate"><span class="pre">provides:</span> <span class="pre">{kind:</span> <span class="pre">hdl-module,</span> <span class="pre">name:</span> <span class="pre">filter}</span></code> requires both the kind and name to match.</p>
 </section>
@@ -366,7 +378,8 @@
 <section id="composition-workflow">
 <h2>Composition Workflow<a class="headerlink" href="#composition-workflow" title="Link to this heading">¶</a></h2>
 <p>Multiple manifests can be composed into a new manifest while preserving the source manifest names in metadata:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># requires: source-package.yaml, constraints-package.yaml and driver-package.yaml beside the script</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">artlink</span><span class="w"> </span><span class="kn">import</span> <span class="n">Manifest</span><span class="p">,</span> <span class="n">load_manifest</span>
 
@@ -391,14 +404,15 @@
 <section id="registry-discovery">
 <h2>Registry Discovery<a class="headerlink" href="#registry-discovery" title="Link to this heading">¶</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">ArtifactRegistry</span></code> tracks the manifests, templates, and artifacts available to a consuming tool. Registry entries preserve their source so later resolver errors can explain where each manifest, template, or artifact came from.</p>
-<p>There are four supported population paths:</p>
+<p>The supported population paths:</p>
 <ul class="simple">
 <li><p>Explicit registration with <code class="docutils literal notranslate"><span class="pre">register_manifest</span></code>, <code class="docutils literal notranslate"><span class="pre">register_artifact</span></code>, or <code class="docutils literal notranslate"><span class="pre">register_manifest_file</span></code>.</p></li>
 <li><p>Template registration with <code class="docutils literal notranslate"><span class="pre">register_template</span></code> or <code class="docutils literal notranslate"><span class="pre">register_template_file</span></code>.</p></li>
 <li><p>Install-path discovery under <code class="docutils literal notranslate"><span class="pre">share/artlink</span></code> from an install root or Python data prefix.</p></li>
 <li><p>Python entry-point discovery through the <code class="docutils literal notranslate"><span class="pre">artlink.manifests</span></code> group.</p></li>
 </ul>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># requires: package.artlink.yaml beside the script and manifests installed under /opt/example</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">artlink</span><span class="w"> </span><span class="kn">import</span> <span class="n">ArtifactRegistry</span><span class="p">,</span> <span class="n">Manifest</span><span class="p">,</span> <span class="n">Reference</span><span class="p">,</span> <span class="n">artlink_install_dir</span><span class="p">,</span> <span class="n">manifest_install_dir</span>
 
@@ -417,7 +431,7 @@
 <span class="k">assert</span> <span class="n">entry</span><span class="o">.</span><span class="n">manifest</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">"local"</span>
 </pre></div>
 </div>
-<p>Installed manifests should also use artifact paths relative to their own manifest file location, or absolute paths when necessary. For example, a manifest installed at <code class="docutils literal notranslate"><span class="pre">/opt/example/share/artlink/hdl-filter/2.0.0/manifest.yaml</span></code> next to <code class="docutils literal notranslate"><span class="pre">/opt/example/share/artlink/hdl-filter/2.0.0/filter.sv</span></code> can be written as:</p>
+<p>Installed manifests use artifact paths relative to their own manifest file location. For example, a manifest installed at <code class="docutils literal notranslate"><span class="pre">/opt/example/share/artlink/hdl-filter/2.0.0/manifest.yaml</span></code> next to <code class="docutils literal notranslate"><span class="pre">/opt/example/share/artlink/hdl-filter/2.0.0/filter.sv</span></code> can be written as:</p>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">schema</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">artlink.manifest/v0</span>
 <span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">hdl-filter</span>
 <span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2.0.0</span>
@@ -473,7 +487,8 @@
 <span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/opt/example</span>
 </pre></div>
 </div>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># requires: artlink-registry.yaml beside the script</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">artlink</span><span class="w"> </span><span class="kn">import</span> <span class="n">ArtifactRegistry</span><span class="p">,</span> <span class="n">load_registry</span>
 
@@ -488,7 +503,8 @@
 <section id="resolution-graphs">
 <h2>Resolution Graphs<a class="headerlink" href="#resolution-graphs" title="Link to this heading">¶</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">resolve_manifest(manifest,</span> <span class="pre">registry)</span></code> resolves manifest references recursively and records template references in the same graph. Templates can reference other templates, so shared validation requirements can be composed without duplicating rules. The returned <code class="docutils literal notranslate"><span class="pre">ResolutionPlan</span></code> records graph nodes, edges, resolved manifests, resolved templates, artifacts contributed by resolved manifests, provider selections, and structured resolution issues. It fails early on missing, ambiguous, or cyclic manifest references.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># requires: an hdl-filter 2.0.0 package installed under /opt/example</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">artlink</span><span class="w"> </span><span class="kn">import</span> <span class="n">ArtifactRegistry</span><span class="p">,</span> <span class="n">Manifest</span><span class="p">,</span> <span class="n">Reference</span><span class="p">,</span> <span class="n">resolve_manifest</span>
 
@@ -507,13 +523,14 @@
 <span class="k">assert</span> <span class="p">[</span><span class="n">template</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">template</span> <span class="ow">in</span> <span class="n">plan</span><span class="o">.</span><span class="n">resolved_templates</span><span class="p">]</span>
 </pre></div>
 </div>
-<p>The resolver also detects duplicate capability providers across resolved manifests. By default, duplicate providers are errors. Tools that want to report diagnostics without failing can use <code class="docutils literal notranslate"><span class="pre">provider_conflict_policy=&quot;warning&quot;</span></code>; tools that intentionally allow duplicates can use <code class="docutils literal notranslate"><span class="pre">provider_conflict_policy=&quot;ignore&quot;</span></code>. A first selection policy, <code class="docutils literal notranslate"><span class="pre">provider_conflict_policy=&quot;prefer-explicit&quot;</span></code>, chooses explicitly registered providers and records that selection in the plan.</p>
-<p>Resolution is intentionally separate from materialization. <code class="docutils literal notranslate"><span class="pre">build_materialization_plan(plan,</span> <span class="pre">registry,</span> <span class="pre">target_dir=...)</span></code> produces a <code class="docutils literal notranslate"><span class="pre">MaterializationPlan</span></code> describing local copy, symlink, archive extraction, package resource, and remote reference actions. <code class="docutils literal notranslate"><span class="pre">execute_materialization_plan(plan)</span></code> performs local filesystem actions while leaving remote references as no-ops.</p>
+<p>The resolver also detects duplicate capability providers across resolved manifests. By default, duplicate providers are errors. Tools that want to report diagnostics without failing can use <code class="docutils literal notranslate"><span class="pre">provider_conflict_policy=&quot;warning&quot;</span></code>; tools that intentionally allow duplicates can use <code class="docutils literal notranslate"><span class="pre">provider_conflict_policy=&quot;ignore&quot;</span></code>. The selection policy <code class="docutils literal notranslate"><span class="pre">provider_conflict_policy=&quot;prefer-explicit&quot;</span></code> chooses explicitly registered providers and records that selection in the plan.</p>
+<p>Resolution is intentionally separate from materialization. <code class="docutils literal notranslate"><span class="pre">build_materialization_plan(plan,</span> <span class="pre">registry,</span> <span class="pre">target_dir=...)</span></code> produces a <code class="docutils literal notranslate"><span class="pre">MaterializationPlan</span></code> describing local copy, symlink, archive extraction, package resource, and remote reference actions. <code class="docutils literal notranslate"><span class="pre">execute_materialization_plan(plan)</span></code> performs local filesystem actions while leaving remote references as no-ops. It refuses to replace a file that already exists at a destination unless called with <code class="docutils literal notranslate"><span class="pre">overwrite=True</span></code>; archive members are checked for containment before extraction.</p>
 </section>
 <section id="package-archives">
 <h2>Package Archives<a class="headerlink" href="#package-archives" title="Link to this heading">¶</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">artlink.packages</span></code> provides domain-neutral helpers for building discoverable <code class="docutils literal notranslate"><span class="pre">.tar.gz</span></code> artifact packages. A package archive places a manifest under <code class="docutils literal notranslate"><span class="pre">share/artlink/&lt;type&gt;/&lt;name&gt;/&lt;version&gt;/manifest.yaml</span></code> and stores path-based artifacts next to it, so extracting the archive into an install prefix makes it discoverable with <code class="docutils literal notranslate"><span class="pre">ArtifactRegistry.from_install_path(prefix)</span></code>.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># requires: a docs/ tree to package and write access to /opt/example</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">artlink</span><span class="w"> </span><span class="kn">import</span> <span class="n">ArtifactRegistry</span><span class="p">,</span> <span class="n">build_package_archive</span><span class="p">,</span> <span class="n">discover_packages</span><span class="p">,</span> <span class="n">install_package_archive</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">artlink.examples.domains.docs</span><span class="w"> </span><span class="kn">import</span> <span class="n">DocumentationSiteScheme</span>
@@ -536,7 +553,8 @@
 <h2>Hardware Profile Example<a class="headerlink" href="#hardware-profile-example" title="Link to this heading">¶</a></h2>
 <p>Domain profiles are intentionally practical: each one bundles common project files according to a scheme, installs the resolved artifacts, and returns a Python object with the paths and tool requirements a downstream tool needs. They sit on top of the same manifest, registry, resolver, and materializer core; they do not make the core domain-specific.</p>
 <p>The hardware profile collects HDL build inputs for downstream Vivado, simulator, cocotb, or Verilator tooling.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># requires: a hardware project (rtl/, include/, tb/, tests/, verilator/, constraints/) in the working directory</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">artlink</span><span class="w"> </span><span class="kn">import</span> <span class="n">ArtifactRegistry</span><span class="p">,</span> <span class="n">Manifest</span><span class="p">,</span> <span class="n">Reference</span><span class="p">,</span> <span class="n">resolve_manifest</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">artlink.examples.domains.hdl</span><span class="w"> </span><span class="kn">import</span> <span class="n">HardwareProjectScheme</span><span class="p">,</span> <span class="n">ToolRequirement</span>
@@ -572,7 +590,8 @@
 <section id="python-packaging-profile">
 <h2>Python Packaging Profile<a class="headerlink" href="#python-packaging-profile" title="Link to this heading">¶</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">PythonPackageScheme</span></code> bundles Python project files and built distributions. It reads <code class="docutils literal notranslate"><span class="pre">[project]</span></code> metadata from <code class="docutils literal notranslate"><span class="pre">pyproject.toml</span></code>, keeps wheels and source distributions as distributable package artifacts, and collects the paths a downstream packaging, publishing, or validation tool needs.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># requires: a Python project with built distributions under dist/ in the working directory</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">artlink</span><span class="w"> </span><span class="kn">import</span> <span class="n">ArtifactRegistry</span><span class="p">,</span> <span class="n">Manifest</span><span class="p">,</span> <span class="n">Reference</span><span class="p">,</span> <span class="n">resolve_manifest</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">artlink.examples.domains.python</span><span class="w"> </span><span class="kn">import</span> <span class="n">PythonPackageScheme</span><span class="p">,</span> <span class="n">ToolRequirement</span>
@@ -603,7 +622,8 @@
 <section id="model-release-profile">
 <h2>Model Release Profile<a class="headerlink" href="#model-release-profile" title="Link to this heading">¶</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">ModelReleaseScheme</span></code> is a concrete example for ML deployment and evaluation workflows. It collects model files, inference code, schemas, metrics, configuration, environment files, and tool requirements into a typed <code class="docutils literal notranslate"><span class="pre">ModelReleaseCollection</span></code>.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># requires: a model release tree (models/, src/, schemas/, metrics/, configs/, requirements.txt) in the working directory</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">artlink</span><span class="w"> </span><span class="kn">import</span> <span class="n">ArtifactRegistry</span><span class="p">,</span> <span class="n">Manifest</span><span class="p">,</span> <span class="n">Reference</span><span class="p">,</span> <span class="n">resolve_manifest</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">artlink.examples.domains.ml</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModelReleaseScheme</span><span class="p">,</span> <span class="n">ToolRequirement</span>
@@ -635,7 +655,8 @@
 <section id="documentation-site-profile">
 <h2>Documentation Site Profile<a class="headerlink" href="#documentation-site-profile" title="Link to this heading">¶</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">DocumentationSiteScheme</span></code> collects docs source, static assets, site configuration, built output, and documentation tooling. It is useful for packaging docs as release artifacts or feeding a publish step with normalized paths.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># requires: a documentation tree (mkdocs.yml, docs/, site/) in the working directory</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">artlink</span><span class="w"> </span><span class="kn">import</span> <span class="n">ArtifactRegistry</span><span class="p">,</span> <span class="n">Manifest</span><span class="p">,</span> <span class="n">Reference</span><span class="p">,</span> <span class="n">resolve_manifest</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">artlink.examples.domains.docs</span><span class="w"> </span><span class="kn">import</span> <span class="n">DocumentationSiteScheme</span><span class="p">,</span> <span class="n">ToolRequirement</span>
@@ -679,7 +700,7 @@
     <span class="p">)</span>
 </pre></div>
 </div>
-<p>That creates two reusable commands for each registered scheme:</p>
+<p>That creates <code class="docutils literal notranslate"><span class="pre">bundle</span></code> and <code class="docutils literal notranslate"><span class="pre">install</span></code> commands for each registered scheme:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>my-packager<span class="w"> </span>bundle<span class="w"> </span>python<span class="w"> </span>--root<span class="w"> </span>.<span class="w"> </span>--name<span class="w"> </span>my-python-package<span class="w"> </span>--output<span class="w"> </span>build/my-python-package.yaml
 my-packager<span class="w"> </span>install<span class="w"> </span>python<span class="w"> </span>--manifest<span class="w"> </span>build/my-python-package.yaml<span class="w"> </span>--target-dir<span class="w"> </span>build/artlink-inputs<span class="w"> </span>--collection-output<span class="w"> </span>build/collection.json
 </pre></div>
@@ -695,23 +716,17 @@ artlink<span class="w"> </span>registry<span class="w"> </span>--root<span class
 </pre></div>
 </div>
 <p><code class="docutils literal notranslate"><span class="pre">artlink</span> <span class="pre">package</span> <span class="pre">--type</span> <span class="pre">docs</span></code> uses <code class="docutils literal notranslate"><span class="pre">DocumentationSiteScheme</span></code>; <code class="docutils literal notranslate"><span class="pre">--type</span> <span class="pre">HDL</span></code> uses <code class="docutils literal notranslate"><span class="pre">HardwareProjectScheme</span></code>; <code class="docutils literal notranslate"><span class="pre">--type</span> <span class="pre">ml</span></code> uses <code class="docutils literal notranslate"><span class="pre">ModelReleaseScheme</span></code>; and <code class="docutils literal notranslate"><span class="pre">--type</span> <span class="pre">python</span></code> uses <code class="docutils literal notranslate"><span class="pre">PythonPackageScheme</span></code>. The generated archive name is always <code class="docutils literal notranslate"><span class="pre">&lt;name&gt;-&lt;version&gt;.tar.gz</span></code> after path-safe normalization.</p>
-<p><code class="docutils literal notranslate"><span class="pre">artlink</span> <span class="pre">registry</span></code> lists all discovered artlink packages below the install root. The optional <code class="docutils literal notranslate"><span class="pre">--type</span></code> filter uses the same package type normalization as archive creation, so <code class="docutils literal notranslate"><span class="pre">--type=HDL</span></code>, <code class="docutils literal notranslate"><span class="pre">--type=hardware</span></code>, and <code class="docutils literal notranslate"><span class="pre">--type=hdl</span></code> select the same package class.</p>
-<p>This is the first step toward the broader artlink flow:</p>
-<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>artifacts -&gt; template validation -&gt; manifest -&gt; resolution/materialization -&gt; artifacts
-</pre></div>
-</div>
-<p>and:</p>
-<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>input manifests + local artifacts + build metadata -&gt; output manifest
-</pre></div>
-</div>
+<p><code class="docutils literal notranslate"><span class="pre">artlink</span> <span class="pre">registry</span></code> lists all discovered artlink packages below the install root. The optional <code class="docutils literal notranslate"><span class="pre">--type</span></code> filter uses the same package type normalization as archive creation, so <code class="docutils literal notranslate"><span class="pre">--type=HDL</span></code>, <code class="docutils literal notranslate"><span class="pre">--type=hardware</span></code>, and <code class="docutils literal notranslate"><span class="pre">--type=hdl</span></code> select the same package class. <code class="docutils literal notranslate"><span class="pre">artlink</span> <span class="pre">install</span></code> refuses to replace files already present in the prefix unless <code class="docutils literal notranslate"><span class="pre">--overwrite</span></code> is given.</p>
 </section>
 <section id="development">
 <h2>Development<a class="headerlink" href="#development" title="Link to this heading">¶</a></h2>
-<p>Run the test suite with:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-m<span class="w"> </span>pytest<span class="w"> </span>-q<span class="w"> </span>artlink/tests
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>make<span class="w"> </span>develop
+make<span class="w"> </span>lint
+make<span class="w"> </span>checks
+python<span class="w"> </span>-m<span class="w"> </span>pytest<span class="w"> </span>-q<span class="w"> </span>artlink/tests
 </pre></div>
 </div>
-<p>The tests include unit coverage for manifests, templates, registries, resolution, materialization, CLI-building helpers, and integration workflows for HDL projects, Python packages built with Hatchling, model releases, and documentation sites.</p>
+<p>The tests cover manifests, templates, registries, resolution, materialization and the CLI-building helpers, and run integration workflows for HDL projects, Python packages built with Hatchling, model releases and documentation sites. The README’s self-contained Python and YAML blocks run as a test; blocks that need files the snippet does not create open with a <code class="docutils literal notranslate"><span class="pre">#</span> <span class="pre">requires:</span></code> line.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>This library was generated using <a class="reference external" href="https://copier.readthedocs.io/en/stable/">copier</a> from the <a class="reference external" href="https://github.com/python-project-templates/base">Base Python Project Template repository</a>.</p>
