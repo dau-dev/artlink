@@ -205,3 +205,16 @@ def test_manifest_validates_concrete_artifact_paths(tmp_path: Path) -> None:
     assert "missing artifact path" in message
     assert "constraints/missing.xdc" in message
     assert "driver.whl" not in message
+
+
+def test_load_manifest_reports_unreadable_and_malformed_files_as_manifest_errors(tmp_path: Path) -> None:
+    with pytest.raises(ManifestError, match="cannot read manifest"):
+        load_manifest(tmp_path / "missing.yaml")
+    bad = tmp_path / "bad.yaml"
+    bad.write_text("schema: [unclosed\n", encoding="utf-8")
+    with pytest.raises(ManifestError, match="not valid YAML"):
+        load_manifest(bad)
+    not_a_mapping = tmp_path / "list.yaml"
+    not_a_mapping.write_text("- a\n", encoding="utf-8")
+    with pytest.raises(ManifestError, match="must be a YAML mapping"):
+        load_manifest(not_a_mapping)

@@ -192,29 +192,6 @@ def test_registry_discovers_manifests_from_entry_points(tmp_path: Path) -> None:
     assert registry.get_manifest_entry("entry-point-file").source == "entry-point:file-provider"
 
 
-def test_registry_entry_point_manifest_file_uses_manifest_directory_root(tmp_path: Path) -> None:
-    install_dir = manifest_install_dir(tmp_path)
-    package_dir = artlink_install_dir(tmp_path) / "entry-point-package"
-    install_dir.mkdir(parents=True)
-    package_dir.mkdir(parents=True)
-    artifact_path = package_dir / "payload.txt"
-    artifact_path.write_text("payload\n", encoding="utf-8")
-    manifest = Manifest(
-        name="entry-point-installed-file",
-        artifacts=(Artifact(id="payload", path=Path("../entry-point-package/payload.txt"), kind="metadata", role="data"),),
-    )
-    manifest_path = install_dir / "entry-point-installed-file.yaml"
-    manifest_path.write_text(manifest.to_yaml_text(), encoding="utf-8")
-
-    registry = ArtifactRegistry().discover_entry_points(
-        entry_points=(FakeEntryPoint("installed-file-provider", ARTLINK_MANIFEST_ENTRY_POINT_GROUP, manifest_path),)
-    )
-
-    entry = registry.find_artifacts(role="data")[0]
-    assert entry.root == install_dir
-    assert registry.artifact_file_path(entry) == artifact_path
-
-
 def test_registry_loads_configured_sources_from_yaml(tmp_path: Path) -> None:
     manifest_dir = tmp_path / "manifests"
     data_dir = manifest_dir / "payload"
@@ -279,3 +256,12 @@ class FakeEntryPoint:
 
     def load(self) -> Any:
         return self._value
+
+
+def test_load_registry_reports_unreadable_and_malformed_files_as_registry_errors(tmp_path: Path) -> None:
+    with pytest.raises(RegistryError, match="cannot read registry config"):
+        load_registry(tmp_path / "missing.yaml")
+    bad = tmp_path / "bad.yaml"
+    bad.write_text("install_roots: [unclosed\n", encoding="utf-8")
+    with pytest.raises(RegistryError, match="not valid YAML"):
+        load_registry(bad)

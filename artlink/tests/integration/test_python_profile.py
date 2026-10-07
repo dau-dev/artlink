@@ -38,6 +38,7 @@ packages = ["src/demo_pkg"]
         check=True,
         capture_output=True,
         text=True,
+        timeout=300,
     )
 
     scheme = PythonPackageScheme(

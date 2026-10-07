@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Any, Self
 
 import yaml
-from pydantic import ConfigDict, Field, ValidationError, field_validator, model_validator
+from pydantic import ConfigDict, Field, field_validator, model_validator
 
 from .artifact import Artifact, ManifestError, Reference, _ManifestModel
 
@@ -73,7 +73,14 @@ class Manifest(_ManifestModel):
 
 
 def load_manifest(path: Path, *, validate_paths: bool = False, root: Path | None = None) -> Manifest:
-    raw = yaml.safe_load(path.read_text(encoding="utf-8"))
+    """Read a manifest file. Every failure, unreadable file, bad YAML or an
+    invalid document, is a ManifestError."""
+    try:
+        raw = yaml.safe_load(path.read_text(encoding="utf-8"))
+    except OSError as exc:
+        raise ManifestError(f"cannot read manifest {path}: {exc}") from exc
+    except yaml.YAMLError as exc:
+        raise ManifestError(f"manifest {path} is not valid YAML: {exc}") from exc
     if not isinstance(raw, dict):
         raise ManifestError("manifest must be a YAML mapping")
     manifest = manifest_from_mapping(raw)
@@ -83,10 +90,7 @@ def load_manifest(path: Path, *, validate_paths: bool = False, root: Path | None
 
 
 def manifest_from_mapping(raw: dict[str, Any]) -> Manifest:
-    try:
-        return Manifest(**raw)
-    except ValidationError as exc:
-        raise ManifestError(str(exc)) from exc
+    return Manifest(**raw)
 
 
 def validate_artifact_files(manifest: Manifest, *, root: Path) -> None:
@@ -101,8 +105,6 @@ def validate_artifact_files(manifest: Manifest, *, root: Path) -> None:
 def artifact_path(root: Path, artifact: Artifact) -> Path:
     if artifact.path is None:
         raise ManifestError(f"artifact has no filesystem path: {artifact.display_id}")
-    if artifact.path.is_absolute():
-        return artifact.path
     return root / artifact.path
 
 

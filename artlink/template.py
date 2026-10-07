@@ -221,17 +221,21 @@ class Template(_TemplateModel):
 
 
 def load_template(path: Path) -> Template:
-    raw = yaml.safe_load(path.read_text(encoding="utf-8"))
+    """Read a template file. Every failure, unreadable file, bad YAML or an
+    invalid document, is a TemplateError."""
+    try:
+        raw = yaml.safe_load(path.read_text(encoding="utf-8"))
+    except OSError as exc:
+        raise TemplateError(f"cannot read template {path}: {exc}") from exc
+    except yaml.YAMLError as exc:
+        raise TemplateError(f"template {path} is not valid YAML: {exc}") from exc
     if not isinstance(raw, dict):
         raise TemplateError("template must be a YAML mapping")
     return template_from_mapping(raw)
 
 
 def template_from_mapping(raw: dict[str, Any]) -> Template:
-    try:
-        return Template(**raw)
-    except ValidationError as exc:
-        raise TemplateError(str(exc)) from exc
+    return Template(**raw)
 
 
 def _artifact_word(count: int) -> str:

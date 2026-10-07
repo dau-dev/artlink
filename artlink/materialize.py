@@ -9,6 +9,7 @@ from urllib.parse import urlparse
 from pydantic import ConfigDict, Field
 
 from .artifact import Artifact, ArtlinkError, _ArtlinkModel
+from .packages import PackageError, extract_archive
 from .registry import ArtifactRegistry, ArtifactRegistryEntry, RegistryError
 from .resolver import ResolutionPlan
 
@@ -75,9 +76,11 @@ def build_materialization_plan(
     return MaterializationPlan(target_dir=target_dir, actions=actions)
 
 
-def execute_materialization_plan(plan: MaterializationPlan) -> MaterializationResult:
+def execute_materialization_plan(plan: MaterializationPlan, *, overwrite: bool = False) -> MaterializationResult:
+    """Perform the plan's local actions. A destination that already exists is
+    refused unless ``overwrite`` is set; remote references are left alone."""
     for action in plan.actions:
-        _execute_action(action)
+        _execute_action(action, overwrite=overwrite)
     return MaterializationResult(actions=plan.actions)
 
 
@@ -134,8 +137,6 @@ def _action_for_entry(
 
 
 def _destination_for_path(target_dir: Path, artifact_path: Path) -> Path:
-    if artifact_path.is_absolute() or ".." in artifact_path.parts:
-        return target_dir / artifact_path.name
     return target_dir / artifact_path
 
 
@@ -155,43 +156,53 @@ def _destination_for_package_uri(target_dir: Path, uri: str) -> Path:
     return target_dir / resource_path.name
 
 
-def _execute_action(action: MaterializationAction) -> None:
+def _execute_action(action: MaterializationAction, *, overwrite: bool) -> None:
     if action.method == "reference":
         return
     if action.destination is None:
         raise MaterializationError(f"materialization action requires a destination: {action.artifact_id}")
     if action.method == "copy":
-        _copy_path(Path(action.source), action.destination)
+        _copy_path(Path(action.source), action.destination, overwrite=overwrite)
         return
     if action.method == "symlink":
-        _symlink_path(Path(action.source), action.destination)
+        _symlink_path(Path(action.source), action.destination, overwrite=overwrite)
         return
     if action.method == "archive-extract":
         action.destination.mkdir(parents=True, exist_ok=True)
-        shutil.unpack_archive(action.source, action.destination)
+        try:
+            extract_archive(Path(action.source), action.destination, overwrite=overwrite)
+        except PackageError as exc:
+            raise MaterializationError(str(exc)) from exc
         return
     if action.method == "package-resource":
-        _copy_package_resource(action.source, action.destination)
+        _copy_package_resource(action.source, action.destination, overwrite=overwrite)
         return
     raise MaterializationError(f"unsupported materialization method: {action.method}")
 
 
-def _copy_path(source: Path, destination: Path) -> None:
+def _refuse_existing(destination: Path, *, overwrite: bool) -> None:
+    if not overwrite and (destination.exists() or destination.is_symlink()):
+        raise MaterializationError(f"refusing to overwrite {destination}; pass overwrite to replace it")
+
+
+def _copy_path(source: Path, destination: Path, *, overwrite: bool) -> None:
+    _refuse_existing(destination, overwrite=overwrite)
     destination.parent.mkdir(parents=True, exist_ok=True)
     if source.is_dir():
-        shutil.copytree(source, destination, dirs_exist_ok=True)
+        shutil.copytree(source, destination, dirs_exist_ok=overwrite)
         return
     shutil.copy2(source, destination)
 
 
-def _symlink_path(source: Path, destination: Path) -> None:
+def _symlink_path(source: Path, destination: Path, *, overwrite: bool) -> None:
+    _refuse_existing(destination, overwrite=overwrite)
     destination.parent.mkdir(parents=True, exist_ok=True)
     if destination.exists() or destination.is_symlink():
         destination.unlink()
     destination.symlink_to(source, target_is_directory=source.is_dir())
 
 
-def _copy_package_resource(uri: str, destination: Path) -> None:
+def _copy_package_resource(uri: str, destination: Path, *, overwrite: bool) -> None:
     parsed = urlparse(uri)
     package = parsed.netloc
     resource_path = parsed.path.lstrip("/")
@@ -199,7 +210,7 @@ def _copy_package_resource(uri: str, destination: Path) -> None:
         raise MaterializationError(f"invalid package resource uri: {uri}")
     resource = resources.files(package).joinpath(resource_path)
     with resources.as_file(resource) as source:
-        _copy_path(source, destination)
+        _copy_path(Path(source), destination, overwrite=overwrite)
 
 
 def _manifest_key(name: str, version: str) -> str:

@@ -5,7 +5,7 @@ import json
 import sys
 from collections.abc import Sequence
 from pathlib import Path
-from typing import Any, Protocol, TextIO
+from typing import Any, Protocol, TextIO, runtime_checkable
 
 from pydantic import ConfigDict
 
@@ -23,10 +23,12 @@ __all__ = (
 )
 
 
+@runtime_checkable
 class BundleScheme(Protocol):
     def bundle(self, *, root: Path, name: str, version: str = "", metadata: dict[str, Any] | None = None) -> Manifest: ...
 
 
+@runtime_checkable
 class InstallCollectScheme(BundleScheme, Protocol):
     def install_and_collect(self, resolution: Any, registry: ArtifactRegistry, *, target_dir: Path, path_method: str = "copy") -> Any: ...
 
@@ -35,7 +37,7 @@ class SchemeCliCommand(_ArtlinkModel):
     model_config = ConfigDict(frozen=True, arbitrary_types_allowed=True)
 
     name: str
-    scheme: Any
+    scheme: InstallCollectScheme
     description: str = ""
 
 

@@ -21,6 +21,20 @@ The public model objects inherit from `ccflow.BaseModel`, which keeps them compa
 
 Reusable functionality lives in the core modules plus `artlink.domains.common`, `artlink.packages`, `artlink.registry`, and `artlink.cli_tools`. The HDL, Python, model-release, and documentation profiles are intentionally packaged as example domain profiles under `artlink.examples.domains`, not as core artlink policy.
 
+## Installation
+
+```bash
+pip install artlink
+```
+
+For development:
+
+```bash
+git clone https://github.com/dau-dev/artlink.git
+cd artlink
+pip install -e ".[develop]"
+```
+
 ## Core Concepts
 
 An `Artifact` is a file, directory, URI, generated output, package resource, or logical content item that another tool can consume. It has a broad `kind`, a domain-facing `role`, optional source metadata, optional capabilities in `provides` and `requires`, and optional digest or metadata fields.
@@ -88,28 +102,28 @@ name: project-inputs
 version: ''
 intent: input
 artifacts:
-    - id: filter-rtl
-      name: ''
-      path: rtl/filter.sv
-      uri: ''
-      kind: source
-      role: hdl-source
-      format: sv
-      media_type: ''
-      language: systemverilog
-      provides:
-                    - kind: hdl-module
-                        name: filter
-      requires: []
-      digest: null
-      metadata: {}
+  - id: filter-rtl
+    name: ''
+    path: rtl/filter.sv
+    uri: ''
+    kind: source
+    role: hdl-source
+    format: sv
+    media_type: ''
+    language: systemverilog
+    provides:
+      - kind: hdl-module
+        name: filter
+    requires: []
+    digest: null
+    metadata: {}
 references: []
 metadata: {}
 ```
 
 Use `load_manifest(path)` to read a manifest and `validate_artifact_files(manifest, root=...)` when a workflow needs to prove that path-based artifacts exist locally. URI-only artifacts are skipped by local path validation.
 
-Artifact paths in manifest YAML should be absolute or relative to the directory containing the manifest file. `Artifact` uses Pydantic validation to infer generic fields such as `format` and `media_type` from file paths or URI suffixes when those fields are omitted. Explicit values always win. If an explicit value differs from generic inference, `artifact.inference_issues` reports a warning diagnostic without changing the artifact.
+Artifact paths in manifest YAML are relative to the directory containing the manifest file; an absolute path, or one that climbs out of that directory with `..`, is rejected when the manifest is loaded. An artifact declares either a `path` or a `uri`, never both. `Artifact` uses Pydantic validation to infer generic fields such as `format` and `media_type` from file paths or URI suffixes when those fields are omitted. Explicit values always win. If an explicit value differs from generic inference, `artifact.inference_issues` reports a warning diagnostic without changing the artifact.
 
 Artifact `id` is optional. Use it when a tool or human needs a stable short handle for an artifact; otherwise artlink falls back to `name` and then location for display and diagnostics. A manifest rejects duplicate artifact locations instead of silently deduplicating them, because two entries with the same path or URI but different roles or metadata are usually an authoring mistake.
 
@@ -143,6 +157,7 @@ Selectors currently support `kind`, `role`, `language`, `format`, `media_type`, 
 Multiple manifests can be composed into a new manifest while preserving the source manifest names in metadata:
 
 ```python
+# requires: source-package.yaml, constraints-package.yaml and driver-package.yaml beside the script
 from pathlib import Path
 
 from artlink import Manifest, load_manifest
@@ -168,7 +183,7 @@ assert project_inputs.metadata["composed_from"] == [
 
 `ArtifactRegistry` tracks the manifests, templates, and artifacts available to a consuming tool. Registry entries preserve their source so later resolver errors can explain where each manifest, template, or artifact came from.
 
-There are four supported population paths:
+The supported population paths:
 
 - Explicit registration with `register_manifest`, `register_artifact`, or `register_manifest_file`.
 - Template registration with `register_template` or `register_template_file`.
@@ -176,6 +191,7 @@ There are four supported population paths:
 - Python entry-point discovery through the `artlink.manifests` group.
 
 ```python
+# requires: package.artlink.yaml beside the script and manifests installed under /opt/example
 from pathlib import Path
 
 from artlink import ArtifactRegistry, Manifest, Reference, artlink_install_dir, manifest_install_dir
@@ -195,7 +211,7 @@ entry = registry.resolve_reference(Reference(kind="manifest", target="local"))
 assert entry.manifest.name == "local"
 ```
 
-Installed manifests should also use artifact paths relative to their own manifest file location, or absolute paths when necessary. For example, a manifest installed at `/opt/example/share/artlink/hdl-filter/2.0.0/manifest.yaml` next to `/opt/example/share/artlink/hdl-filter/2.0.0/filter.sv` can be written as:
+Installed manifests use artifact paths relative to their own manifest file location. For example, a manifest installed at `/opt/example/share/artlink/hdl-filter/2.0.0/manifest.yaml` next to `/opt/example/share/artlink/hdl-filter/2.0.0/filter.sv` can be written as:
 
 ```yaml
 schema: artlink.manifest/v0
@@ -267,6 +283,7 @@ install_roots:
 ```
 
 ```python
+# requires: artlink-registry.yaml beside the script
 from pathlib import Path
 
 from artlink import ArtifactRegistry, load_registry
@@ -284,6 +301,7 @@ For distributable packages, prefer manifest YAML files under `share/artlink` ove
 `resolve_manifest(manifest, registry)` resolves manifest references recursively and records template references in the same graph. Templates can reference other templates, so shared validation requirements can be composed without duplicating rules. The returned `ResolutionPlan` records graph nodes, edges, resolved manifests, resolved templates, artifacts contributed by resolved manifests, provider selections, and structured resolution issues. It fails early on missing, ambiguous, or cyclic manifest references.
 
 ```python
+# requires: an hdl-filter 2.0.0 package installed under /opt/example
 from pathlib import Path
 
 from artlink import ArtifactRegistry, Manifest, Reference, resolve_manifest
@@ -303,15 +321,16 @@ assert [artifact.display_id for artifact in resolved_inputs.artifacts]
 assert [template.name for template in plan.resolved_templates]
 ```
 
-The resolver also detects duplicate capability providers across resolved manifests. By default, duplicate providers are errors. Tools that want to report diagnostics without failing can use `provider_conflict_policy="warning"`; tools that intentionally allow duplicates can use `provider_conflict_policy="ignore"`. A first selection policy, `provider_conflict_policy="prefer-explicit"`, chooses explicitly registered providers and records that selection in the plan.
+The resolver also detects duplicate capability providers across resolved manifests. By default, duplicate providers are errors. Tools that want to report diagnostics without failing can use `provider_conflict_policy="warning"`; tools that intentionally allow duplicates can use `provider_conflict_policy="ignore"`. The selection policy `provider_conflict_policy="prefer-explicit"` chooses explicitly registered providers and records that selection in the plan.
 
-Resolution is intentionally separate from materialization. `build_materialization_plan(plan, registry, target_dir=...)` produces a `MaterializationPlan` describing local copy, symlink, archive extraction, package resource, and remote reference actions. `execute_materialization_plan(plan)` performs local filesystem actions while leaving remote references as no-ops.
+Resolution is intentionally separate from materialization. `build_materialization_plan(plan, registry, target_dir=...)` produces a `MaterializationPlan` describing local copy, symlink, archive extraction, package resource, and remote reference actions. `execute_materialization_plan(plan)` performs local filesystem actions while leaving remote references as no-ops. It refuses to replace a file that already exists at a destination unless called with `overwrite=True`; archive members are checked for containment before extraction.
 
 ## Package Archives
 
 `artlink.packages` provides domain-neutral helpers for building discoverable `.tar.gz` artifact packages. A package archive places a manifest under `share/artlink/<type>/<name>/<version>/manifest.yaml` and stores path-based artifacts next to it, so extracting the archive into an install prefix makes it discoverable with `ArtifactRegistry.from_install_path(prefix)`.
 
 ```python
+# requires: a docs/ tree to package and write access to /opt/example
 from pathlib import Path
 
 from artlink import ArtifactRegistry, build_package_archive, discover_packages, install_package_archive
@@ -338,6 +357,7 @@ Domain profiles are intentionally practical: each one bundles common project fil
 The hardware profile collects HDL build inputs for downstream Vivado, simulator, cocotb, or Verilator tooling.
 
 ```python
+# requires: a hardware project (rtl/, include/, tb/, tests/, verilator/, constraints/) in the working directory
 from pathlib import Path
 
 from artlink import ArtifactRegistry, Manifest, Reference, resolve_manifest
@@ -376,6 +396,7 @@ The profile does not generate Tcl, invoke simulators, run pytest, or run Verilat
 `PythonPackageScheme` bundles Python project files and built distributions. It reads `[project]` metadata from `pyproject.toml`, keeps wheels and source distributions as distributable package artifacts, and collects the paths a downstream packaging, publishing, or validation tool needs.
 
 ```python
+# requires: a Python project with built distributions under dist/ in the working directory
 from pathlib import Path
 
 from artlink import ArtifactRegistry, Manifest, Reference, resolve_manifest
@@ -409,6 +430,7 @@ The integration test builds a real Hatchling project with `python -m build --sdi
 `ModelReleaseScheme` is a concrete example for ML deployment and evaluation workflows. It collects model files, inference code, schemas, metrics, configuration, environment files, and tool requirements into a typed `ModelReleaseCollection`.
 
 ```python
+# requires: a model release tree (models/, src/, schemas/, metrics/, configs/, requirements.txt) in the working directory
 from pathlib import Path
 
 from artlink import ArtifactRegistry, Manifest, Reference, resolve_manifest
@@ -443,6 +465,7 @@ This profile does not evaluate or serve a model. It prepares the resolved artifa
 `DocumentationSiteScheme` collects docs source, static assets, site configuration, built output, and documentation tooling. It is useful for packaging docs as release artifacts or feeding a publish step with normalized paths.
 
 ```python
+# requires: a documentation tree (mkdocs.yml, docs/, site/) in the working directory
 from pathlib import Path
 
 from artlink import ArtifactRegistry, Manifest, Reference, resolve_manifest
@@ -489,7 +512,7 @@ def main() -> int:
     )
 ```
 
-That creates two reusable commands for each registered scheme:
+That creates `bundle` and `install` commands for each registered scheme:
 
 ```bash
 my-packager bundle python --root . --name my-python-package --output build/my-python-package.yaml
@@ -510,29 +533,18 @@ artlink registry --root /opt/example --type HDL --format json
 
 `artlink package --type docs` uses `DocumentationSiteScheme`; `--type HDL` uses `HardwareProjectScheme`; `--type ml` uses `ModelReleaseScheme`; and `--type python` uses `PythonPackageScheme`. The generated archive name is always `<name>-<version>.tar.gz` after path-safe normalization.
 
-`artlink registry` lists all discovered artlink packages below the install root. The optional `--type` filter uses the same package type normalization as archive creation, so `--type=HDL`, `--type=hardware`, and `--type=hdl` select the same package class.
-
-This is the first step toward the broader artlink flow:
-
-```text
-artifacts -> template validation -> manifest -> resolution/materialization -> artifacts
-```
-
-and:
-
-```text
-input manifests + local artifacts + build metadata -> output manifest
-```
+`artlink registry` lists all discovered artlink packages below the install root. The optional `--type` filter uses the same package type normalization as archive creation, so `--type=HDL`, `--type=hardware`, and `--type=hdl` select the same package class. `artlink install` refuses to replace files already present in the prefix unless `--overwrite` is given.
 
 ## Development
 
-Run the test suite with:
-
 ```bash
+make develop
+make lint
+make checks
 python -m pytest -q artlink/tests
 ```
 
-The tests include unit coverage for manifests, templates, registries, resolution, materialization, CLI-building helpers, and integration workflows for HDL projects, Python packages built with Hatchling, model releases, and documentation sites.
+The tests cover manifests, templates, registries, resolution, materialization and the CLI-building helpers, and run integration workflows for HDL projects, Python packages built with Hatchling, model releases and documentation sites. The README's self-contained Python and YAML blocks run as a test; blocks that need files the snippet does not create open with a `# requires:` line.
 
 > [!NOTE]
 > This library was generated using [copier](https://copier.readthedocs.io/en/stable/) from the [Base Python Project Template repository](https://github.com/python-project-templates/base).
