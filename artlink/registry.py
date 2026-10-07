@@ -299,7 +299,14 @@ class ArtifactRegistry(_ArtlinkModel):
             raise RegistryError(f"artifact has no filesystem path: {entry.artifact.display_id}")
         if entry.root is None:
             return artifact_path
-        return (entry.root / artifact_path).resolve(strict=False)
+        # the path is lexically confined at construction; a symlinked directory
+        # under the root could still lead outside it, so the resolved path is
+        # checked against the resolved root
+        root = entry.root.resolve(strict=False)
+        resolved = (root / artifact_path).resolve(strict=False)
+        if resolved != root and root not in resolved.parents:
+            raise RegistryError(f"artifact path {artifact_path.as_posix()} resolves outside its manifest root {root}: {resolved}")
+        return resolved
 
     def _entries_for_name(self, name: str) -> tuple[ManifestRegistryEntry, ...]:
         return tuple(entry for (manifest_name, _), entry in self._manifests.items() if manifest_name == name)
@@ -340,7 +347,7 @@ def load_registry(path: Path) -> ArtifactRegistry:
     registry_path = Path(path)
     try:
         raw = yaml.safe_load(registry_path.read_text(encoding="utf-8"))
-    except OSError as exc:
+    except (OSError, UnicodeDecodeError) as exc:
         raise RegistryError(f"cannot read registry config {registry_path}: {exc}") from exc
     except yaml.YAMLError as exc:
         raise RegistryError(f"registry config {registry_path} is not valid YAML: {exc}") from exc
@@ -395,10 +402,14 @@ def _resolve_registry_config_paths(raw: dict[str, Any], *, base_dir: Path) -> di
 def _path_values(value: Any) -> tuple[Any, ...]:
     if isinstance(value, str | PathLike):
         return (value,)
-    return tuple(value)
+    if isinstance(value, list | tuple):
+        return tuple(value)
+    raise RegistryError(f"expected a path or a list of paths, got {type(value).__name__}")
 
 
 def _resolve_config_path(base_dir: Path, value: Any) -> Path:
+    if not isinstance(value, str | PathLike):
+        raise RegistryError(f"expected a path, got {type(value).__name__}: {value!r}")
     path = Path(value).expanduser()
     if path.is_absolute():
         return path

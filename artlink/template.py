@@ -225,7 +225,7 @@ def load_template(path: Path) -> Template:
     invalid document, is a TemplateError."""
     try:
         raw = yaml.safe_load(path.read_text(encoding="utf-8"))
-    except OSError as exc:
+    except (OSError, UnicodeDecodeError) as exc:
         raise TemplateError(f"cannot read template {path}: {exc}") from exc
     except yaml.YAMLError as exc:
         raise TemplateError(f"template {path} is not valid YAML: {exc}") from exc

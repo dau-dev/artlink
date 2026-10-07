@@ -215,6 +215,9 @@ class Artifact(_ManifestModel):
             return ()
         if isinstance(value, str | dict | Capability):
             return (capability_from_value(value),)
+        if not isinstance(value, list | tuple | set | frozenset):
+            # a ValueError, not a TypeError: pydantic turns only ValueError into a validation error
+            raise ValueError(f"capabilities must be a name, a record or a list of them, got {type(value).__name__}")  # noqa: TRY004
         return tuple(capability_from_value(item) for item in value)
 
     @field_serializer("provides", "requires")

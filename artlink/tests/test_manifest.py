@@ -218,3 +218,13 @@ def test_load_manifest_reports_unreadable_and_malformed_files_as_manifest_errors
     not_a_mapping.write_text("- a\n", encoding="utf-8")
     with pytest.raises(ManifestError, match="must be a YAML mapping"):
         load_manifest(not_a_mapping)
+
+
+def test_load_manifest_wraps_bad_encodings_and_malformed_capabilities(tmp_path: Path) -> None:
+    bad = tmp_path / "bad.yaml"
+    bad.write_bytes(b"\xff\xfe not utf-8")
+    with pytest.raises(ManifestError, match="cannot read manifest"):
+        load_manifest(bad)
+    bad.write_text("schema: artlink.manifest/v0\nname: m\nartifacts:\n  - path: a.txt\n    role: data\n    requires: 1\n", encoding="utf-8")
+    with pytest.raises(ManifestError, match="capabilities must be"):
+        load_manifest(bad)

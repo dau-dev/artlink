@@ -1,7 +1,7 @@
 import io
 import tarfile
 from pathlib import Path
-from zipfile import ZipFile
+from zipfile import ZipFile, ZipInfo
 
 import pytest
 
@@ -42,7 +42,7 @@ def test_archive_members_that_escape_the_destination_are_refused(tmp_path: Path)
         extract_archive(zip_path, destination)
 
 
-def test_symlink_members_pointing_outside_are_refused_by_the_data_filter(tmp_path: Path) -> None:
+def test_symlink_members_pointing_outside_are_refused(tmp_path: Path) -> None:
     archive_path = tmp_path / "link.tar"
     with tarfile.open(archive_path, "w") as archive:
         link = tarfile.TarInfo("link")
@@ -51,7 +51,7 @@ def test_symlink_members_pointing_outside_are_refused_by_the_data_filter(tmp_pat
         archive.addfile(link)
     destination = tmp_path / "prefix"
     destination.mkdir()
-    with pytest.raises(PackageError, match="unsafe member"):
+    with pytest.raises(PackageError, match="contains links"):
         extract_archive(archive_path, destination)
 
 
@@ -85,3 +85,58 @@ def test_not_an_archive_is_refused(tmp_path: Path) -> None:
     plain.write_text("x", encoding="utf-8")
     with pytest.raises(PackageError, match="not a tar or zip archive"):
         extract_archive(plain, tmp_path / "out")
+
+
+def test_link_members_are_refused_before_anything_is_written(tmp_path: Path) -> None:
+    """A link inside the archive (even one the data filter allows) could be
+    followed by a later member and redirect its write; artlink packages never
+    carry links, so they are refused outright and nothing is extracted."""
+    archive_path = tmp_path / "link.tar"
+    with tarfile.open(archive_path, "w") as archive:
+        ok = tarfile.TarInfo("ok.txt")
+        ok.size = 1
+        archive.addfile(ok, io.BytesIO(b"x"))
+        link = tarfile.TarInfo("alias")
+        link.type = tarfile.SYMTYPE
+        link.linkname = "victim"
+        archive.addfile(link)
+    destination = tmp_path / "prefix"
+    destination.mkdir()
+    with pytest.raises(PackageError, match="contains links"):
+        extract_archive(archive_path, destination)
+    assert not (destination / "ok.txt").exists()
+
+    zip_path = tmp_path / "link.zip"
+    with ZipFile(zip_path, "w") as archive:
+        info = ZipInfo("alias")
+        info.external_attr = 0o120777 << 16
+        archive.writestr(info, "victim")
+    with pytest.raises(PackageError, match="contains links"):
+        extract_archive(zip_path, destination)
+
+
+def test_duplicate_member_names_are_refused_case_insensitively(tmp_path: Path) -> None:
+    archive = _tar_with(tmp_path / "dup.tar.gz", {"A.txt": b"1", "a.txt": b"2"})
+    destination = tmp_path / "prefix"
+    destination.mkdir()
+    with pytest.raises(PackageError, match="same path twice"):
+        extract_archive(archive, destination)
+    assert not list(destination.iterdir())
+
+
+def test_unsafe_tar_members_are_rejected_before_the_first_write(tmp_path: Path) -> None:
+    """The data filter runs over every member up front, so a device node after
+    a plain file does not leave the plain file behind."""
+    archive_path = tmp_path / "device.tar"
+    with tarfile.open(archive_path, "w") as archive:
+        ok = tarfile.TarInfo("ok.txt")
+        ok.size = 1
+        archive.addfile(ok, io.BytesIO(b"x"))
+        device = tarfile.TarInfo("dev")
+        device.type = tarfile.CHRTYPE
+        archive.addfile(device)
+    destination = tmp_path / "prefix"
+    destination.mkdir()
+    with pytest.raises(PackageError, match="unsafe member"):
+        extract_archive(archive_path, destination)
+    assert not (destination / "ok.txt").exists()
