@@ -100,3 +100,16 @@ def test_template_round_trips_to_yaml(tmp_path) -> None:
 
     assert loaded == template
     assert "schema: artlink.template/v0" in loaded.to_yaml_text()
+
+
+def test_load_template_reports_unreadable_and_malformed_files_as_template_errors(tmp_path) -> None:
+    import pytest
+
+    from artlink import TemplateError, load_template
+
+    with pytest.raises(TemplateError, match="cannot read template"):
+        load_template(tmp_path / "missing.yaml")
+    bad = tmp_path / "bad.yaml"
+    bad.write_text("rules: [unclosed\n", encoding="utf-8")
+    with pytest.raises(TemplateError, match="not valid YAML"):
+        load_template(bad)

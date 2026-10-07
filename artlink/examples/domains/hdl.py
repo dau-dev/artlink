@@ -39,10 +39,6 @@ class HardwareDesignCollection(_ArtlinkModel):
     constraints: tuple[Path, ...] = Field(default_factory=tuple)
     tools: dict[str, ToolRequirement] = Field(default_factory=dict)
 
-    @property
-    def synthesis_sources(self) -> tuple[Path, ...]:
-        return self.design_sources
-
 
 class HardwareProjectScheme(_ArtlinkModel):
     model_config = ConfigDict(frozen=True)

@@ -297,8 +297,6 @@ class ArtifactRegistry(_ArtlinkModel):
         artifact_path = entry.artifact.path
         if artifact_path is None:
             raise RegistryError(f"artifact has no filesystem path: {entry.artifact.display_id}")
-        if artifact_path.is_absolute():
-            return artifact_path
         if entry.root is None:
             return artifact_path
         return (entry.root / artifact_path).resolve(strict=False)
@@ -337,8 +335,15 @@ def manifest_install_dir(root: Path | None = None) -> Path:
 
 
 def load_registry(path: Path) -> ArtifactRegistry:
+    """Read a registry configuration file. Every failure, unreadable file, bad
+    YAML or an invalid document, is a RegistryError."""
     registry_path = Path(path)
-    raw = yaml.safe_load(registry_path.read_text(encoding="utf-8"))
+    try:
+        raw = yaml.safe_load(registry_path.read_text(encoding="utf-8"))
+    except OSError as exc:
+        raise RegistryError(f"cannot read registry config {registry_path}: {exc}") from exc
+    except yaml.YAMLError as exc:
+        raise RegistryError(f"registry config {registry_path} is not valid YAML: {exc}") from exc
     if not isinstance(raw, dict):
         raise RegistryError("registry config must be a YAML mapping")
     return registry_from_mapping(_resolve_registry_config_paths(raw, base_dir=registry_path.parent))
@@ -404,6 +409,4 @@ def _select_entry_points(*, group: str, entry_points: Any | None) -> tuple[Any, 
     discovered = metadata.entry_points() if entry_points is None else entry_points
     if hasattr(discovered, "select"):
         return tuple(discovered.select(group=group))
-    if isinstance(discovered, dict):
-        return tuple(discovered.get(group, ()))
     return tuple(entry_point for entry_point in discovered if getattr(entry_point, "group", group) == group)

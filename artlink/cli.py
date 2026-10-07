@@ -30,7 +30,7 @@ def main(argv: Sequence[str] | None = None, *, output_stream: TextIO | None = No
         return 0
 
     if args.command == "install":
-        destination = install_package_archive(Path(args.archive), target_dir=Path(args.target_dir))
+        destination = install_package_archive(Path(args.archive), target_dir=Path(args.target_dir), overwrite=args.overwrite)
         stream.write(f"{destination}\n")
         return 0
 
@@ -61,6 +61,7 @@ def _parser() -> argparse.ArgumentParser:
     install = subparsers.add_parser("install", help="extract a discoverable artlink tarball into an install root")
     install.add_argument("archive", help="artlink tarball to install")
     install.add_argument("--target-dir", required=True, help="install prefix to extract into")
+    install.add_argument("--overwrite", action="store_true", help="replace files already present in the prefix")
 
     registry = subparsers.add_parser("registry", help="list discoverable artlink packages")
     registry.add_argument("--root", required=True, help="install prefix to search")

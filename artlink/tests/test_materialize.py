@@ -1,7 +1,18 @@
 from pathlib import Path
 from zipfile import ZipFile
 
-from artlink import Artifact, ArtifactRegistry, Manifest, Reference, build_materialization_plan, execute_materialization_plan, resolve_manifest
+import pytest
+
+from artlink import (
+    Artifact,
+    ArtifactRegistry,
+    Manifest,
+    MaterializationError,
+    Reference,
+    build_materialization_plan,
+    execute_materialization_plan,
+    resolve_manifest,
+)
 
 
 def test_materialization_plan_records_copy_steps_without_touching_files(tmp_path: Path) -> None:
@@ -104,3 +115,32 @@ def test_materialization_executor_copies_package_resources(tmp_path: Path, monke
     execute_materialization_plan(plan)
 
     assert (tmp_path / "resources" / "data.txt").read_text(encoding="utf-8") == "resource\n"
+
+
+def test_materialization_refuses_to_overwrite_an_existing_destination_unless_asked(tmp_path: Path) -> None:
+    package_dir = tmp_path / "package"
+    source_path = package_dir / "rtl" / "filter.sv"
+    source_path.parent.mkdir(parents=True)
+    source_path.write_text("module filter; endmodule\n", encoding="utf-8")
+    source_manifest = Manifest(name="source", artifacts=(Artifact(id="filter", path=Path("rtl/filter.sv"), role="hdl-source"),))
+    project = Manifest(name="project", references=(Reference(kind="manifest", target="source"),))
+    registry = ArtifactRegistry.from_manifests((source_manifest,), root=package_dir)
+    resolution = resolve_manifest(project, registry)
+    target = tmp_path / "copied"
+    existing = target / "rtl" / "filter.sv"
+    existing.parent.mkdir(parents=True)
+    existing.write_text("someone else's file\n", encoding="utf-8")
+
+    plan = build_materialization_plan(resolution, registry, target_dir=target)
+    with pytest.raises(MaterializationError, match="refusing to overwrite"):
+        execute_materialization_plan(plan)
+    assert existing.read_text(encoding="utf-8") == "someone else's file\n"
+
+    execute_materialization_plan(plan, overwrite=True)
+    assert existing.read_text(encoding="utf-8") == "module filter; endmodule\n"
+
+    symlink_plan = build_materialization_plan(resolution, registry, target_dir=target, path_method="symlink")
+    with pytest.raises(MaterializationError, match="refusing to overwrite"):
+        execute_materialization_plan(symlink_plan)
+    execute_materialization_plan(symlink_plan, overwrite=True)
+    assert existing.is_symlink()

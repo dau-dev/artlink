@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import mimetypes
+import re
 from pathlib import Path
 from typing import Any, Literal
 
@@ -8,6 +9,7 @@ from ccflow.base import BaseModel
 from pydantic import ConfigDict, Field, ValidationError, field_serializer, field_validator, model_validator
 
 __all__ = (
+    "DIGEST_HEX_LENGTHS",
     "Artifact",
     "ArtifactInferenceIssue",
     "ArtlinkError",
@@ -43,18 +45,32 @@ class _ManifestModel(_ArtlinkModel):
             raise ManifestError(str(exc)) from exc
 
 
+# the algorithms a digest may name, with the hex length each produces; a
+# digest is only useful if a verifier can recompute it
+DIGEST_HEX_LENGTHS = {"sha256": 64, "sha512": 128, "sha1": 40, "md5": 32, "blake2b": 128}
+_HEX = re.compile(r"[0-9a-fA-F]+")
+
+
 class Digest(_ManifestModel):
     model_config = ConfigDict(frozen=True)
 
     algorithm: str
     value: str
 
-    @field_validator("algorithm", "value")
+    @field_validator("algorithm")
     @classmethod
-    def _validate_required_text(cls, value: str) -> str:
-        if not value:
-            raise ValueError("digest fields must not be empty")
+    def _validate_algorithm(cls, value: str) -> str:
+        if value not in DIGEST_HEX_LENGTHS:
+            raise ValueError(f"unsupported digest algorithm {value!r}; expected one of {', '.join(sorted(DIGEST_HEX_LENGTHS))}")
         return value
+
+    @model_validator(mode="after")
+    def _validate_value(self) -> Digest:
+        expected = DIGEST_HEX_LENGTHS[self.algorithm]
+        if not _HEX.fullmatch(self.value) or len(self.value) != expected:
+            raise ValueError(f"{self.algorithm} digest value must be {expected} hex characters, got {self.value!r}")
+        object.__setattr__(self, "value", self.value.lower())
+        return self
 
 
 class Capability(_ManifestModel):
@@ -110,7 +126,9 @@ class ArtifactInferenceIssue(_ArtlinkModel):
 class Reference(_ManifestModel):
     model_config = ConfigDict(frozen=True)
 
-    kind: Literal["artifact", "manifest", "template", "package", "registry"]
+    # the kinds the registry and resolver implement; a kind that validates but
+    # cannot be resolved would be accepted and then silently ignored
+    kind: Literal["manifest", "template"]
     target: str
     version: str = ""
     metadata: dict[str, Any] = Field(default_factory=dict)
@@ -166,6 +184,16 @@ class Artifact(_ManifestModel):
             return None
         return value
 
+    @field_validator("path")
+    @classmethod
+    def _validate_path_stays_in_root(cls, value: Path | None) -> Path | None:
+        """An artifact path is read relative to its manifest; one that is
+        absolute or climbs out of that directory would make the manifest a
+        pointer to anywhere on the host."""
+        if value is not None and (value.is_absolute() or ".." in value.parts):
+            raise ValueError(f"artifact path must be relative and stay inside its manifest root: {value.as_posix()}")
+        return value
+
     @field_validator("uri", "kind", "role", mode="before")
     @classmethod
     def _normalize_text(cls, value: Any) -> Any:
@@ -202,6 +230,8 @@ class Artifact(_ManifestModel):
     def _validate_location(self) -> Artifact:
         if self.path is None and not self.uri:
             raise ValueError("artifact must declare a path or uri")
+        if self.path is not None and self.uri:
+            raise ValueError(f"artifact must declare exactly one of path or uri, got both: {self.path.as_posix()} and {self.uri}")
         return self
 
     @property

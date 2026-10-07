@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import io
 import re
-import shutil
 import tarfile
+import zipfile
 from pathlib import Path
 from typing import Any
 
@@ -18,6 +18,7 @@ __all__ = (
     "PackageSummary",
     "build_package_archive",
     "discover_packages",
+    "extract_archive",
     "install_package_archive",
     "normalize_package_type",
     "package_archive_name",
@@ -79,18 +80,53 @@ def build_package_archive(
         for artifact in packaged_manifest.artifacts:
             if artifact.path is None:
                 continue
-            source = artifact.path if artifact.path.is_absolute() else Path(artifact_root) / artifact.path
+            source = Path(artifact_root) / artifact.path
             if not source.exists():
                 raise PackageError(f"missing artifact path: {source}")
-            archive.add(source, arcname=(package_root / _archive_artifact_path(artifact.path)).as_posix(), recursive=source.is_dir())
+            archive.add(source, arcname=(package_root / artifact.path).as_posix(), recursive=source.is_dir())
     return archive_path
 
 
-def install_package_archive(archive_path: Path, *, target_dir: Path) -> Path:
+def install_package_archive(archive_path: Path, *, target_dir: Path, overwrite: bool = False) -> Path:
     destination = Path(target_dir)
     destination.mkdir(parents=True, exist_ok=True)
-    shutil.unpack_archive(str(archive_path), str(destination))
+    extract_archive(Path(archive_path), destination, overwrite=overwrite)
     return destination
+
+
+def extract_archive(source: Path, destination: Path, *, overwrite: bool = False) -> tuple[str, ...]:
+    """Extract a tar or zip archive into ``destination`` and return the member
+    names. Every member is checked before anything is written: one that would
+    land outside the destination is refused, and so is one that would replace
+    an existing file unless ``overwrite`` is set. Tar members go through the
+    stdlib ``data`` filter, which also strips device nodes, setuid bits and
+    links that point outside the archive."""
+    root = destination.resolve()
+    if tarfile.is_tarfile(source):
+        with tarfile.open(source) as archive:
+            names = tuple(member.name for member in archive.getmembers())
+            _check_members(root, names, overwrite=overwrite)
+            try:
+                archive.extractall(destination, filter="data")
+            except tarfile.FilterError as exc:
+                raise PackageError(f"archive {source} has an unsafe member: {exc}") from exc
+        return names
+    if zipfile.is_zipfile(source):
+        with zipfile.ZipFile(source) as archive:
+            names = tuple(archive.namelist())
+            _check_members(root, names, overwrite=overwrite)
+            archive.extractall(destination)
+        return names
+    raise PackageError(f"not a tar or zip archive: {source}")
+
+
+def _check_members(root: Path, names: tuple[str, ...], *, overwrite: bool) -> None:
+    for name in names:
+        target = (root / name).resolve()
+        if target != root and root not in target.parents:
+            raise PackageError(f"archive member escapes the destination: {name}")
+        if not overwrite and not name.endswith("/") and (target.is_file() or target.is_symlink()):
+            raise PackageError(f"refusing to overwrite {target}; pass overwrite to replace it")
 
 
 def discover_packages(root: Path, *, package_type: str = "") -> tuple[PackageSummary, ...]:
@@ -113,11 +149,19 @@ def discover_packages(root: Path, *, package_type: str = "") -> tuple[PackageSum
     return tuple(sorted(summaries, key=lambda package: (package.package_type, package.name, package.version)))
 
 
+_PACKAGE_TYPE = re.compile(r"[a-z0-9][a-z0-9.-]*")
+
+
 def normalize_package_type(package_type: str) -> str:
+    """The package type is one path component of the archive layout, so it is
+    held to the characters a component may contain."""
     key = package_type.strip().lower().replace("_", "-")
     if not key:
         raise PackageError("package type must not be empty")
-    return PACKAGE_TYPE_ALIASES.get(key, key)
+    normalized = PACKAGE_TYPE_ALIASES.get(key, key)
+    if not _PACKAGE_TYPE.fullmatch(normalized):
+        raise PackageError(f"invalid package type {package_type!r}: expected letters, digits, dots and hyphens")
+    return normalized
 
 
 def package_archive_name(name: str, version: str) -> str:
@@ -136,12 +180,6 @@ def _add_manifest(archive: tarfile.TarFile, archive_path: Path, manifest: Manife
     info = tarfile.TarInfo(archive_path.as_posix())
     info.size = len(payload)
     archive.addfile(info, io.BytesIO(payload))
-
-
-def _archive_artifact_path(path: Path) -> Path:
-    if path.is_absolute() or ".." in path.parts:
-        return Path(path.name)
-    return path
 
 
 def _manifest_package_type(manifest: Manifest) -> str:
