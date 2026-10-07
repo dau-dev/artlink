@@ -265,3 +265,30 @@ def test_load_registry_reports_unreadable_and_malformed_files_as_registry_errors
     bad.write_text("install_roots: [unclosed\n", encoding="utf-8")
     with pytest.raises(RegistryError, match="not valid YAML"):
         load_registry(bad)
+
+
+def test_artifact_file_path_refuses_a_symlinked_directory_that_leaves_the_root(tmp_path: Path) -> None:
+    """The path is confined lexically at construction; a symlink under the root
+    could still lead out of it, so the resolved path is checked too."""
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    (outside / "secret").write_text("s\n", encoding="utf-8")
+    root = tmp_path / "root"
+    root.mkdir()
+    (root / "link").symlink_to(outside, target_is_directory=True)
+    manifest = Manifest(name="m", artifacts=(Artifact(id="s", path=Path("link/secret"), role="data"),))
+    registry = ArtifactRegistry.from_manifests((manifest,), root=root)
+    entry = registry.find_artifacts(role="data")[0]
+
+    with pytest.raises(RegistryError, match="resolves outside its manifest root"):
+        registry.artifact_file_path(entry)
+
+
+def test_load_registry_refuses_config_values_of_the_wrong_shape(tmp_path: Path) -> None:
+    bad = tmp_path / "registry.yaml"
+    bad.write_text("install_roots: 1\n", encoding="utf-8")
+    with pytest.raises(RegistryError, match="expected a path"):
+        load_registry(bad)
+    bad.write_bytes(b"\xff\xfe not utf-8")
+    with pytest.raises(RegistryError, match="cannot read registry config"):
+        load_registry(bad)

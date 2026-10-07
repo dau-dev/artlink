@@ -77,7 +77,7 @@ def load_manifest(path: Path, *, validate_paths: bool = False, root: Path | None
     invalid document, is a ManifestError."""
     try:
         raw = yaml.safe_load(path.read_text(encoding="utf-8"))
-    except OSError as exc:
+    except (OSError, UnicodeDecodeError) as exc:
         raise ManifestError(f"cannot read manifest {path}: {exc}") from exc
     except yaml.YAMLError as exc:
         raise ManifestError(f"manifest {path} is not valid YAML: {exc}") from exc

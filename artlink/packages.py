@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import io
 import re
+import stat
 import tarfile
 import zipfile
 from pathlib import Path
@@ -96,32 +97,48 @@ def install_package_archive(archive_path: Path, *, target_dir: Path, overwrite: 
 
 def extract_archive(source: Path, destination: Path, *, overwrite: bool = False) -> tuple[str, ...]:
     """Extract a tar or zip archive into ``destination`` and return the member
-    names. Every member is checked before anything is written: one that would
-    land outside the destination is refused, and so is one that would replace
-    an existing file unless ``overwrite`` is set. Tar members go through the
-    stdlib ``data`` filter, which also strips device nodes, setuid bits and
-    links that point outside the archive."""
+    names. Every member is checked before anything is written: links of any
+    kind, duplicate names (compared case-insensitively, for the filesystems
+    that are), a member that would land outside the destination, a tar member
+    the stdlib ``data`` filter rejects (devices, setuid bits), and one that
+    would replace an existing file unless ``overwrite`` is set. The check and
+    the write are separate steps, so a filesystem changed between them by
+    another process is not defended against. Extraction uses the resolved
+    destination, the directory the containment check was made against."""
     root = destination.resolve()
     if tarfile.is_tarfile(source):
         with tarfile.open(source) as archive:
-            names = tuple(member.name for member in archive.getmembers())
-            _check_members(root, names, overwrite=overwrite)
-            try:
-                archive.extractall(destination, filter="data")
-            except tarfile.FilterError as exc:
-                raise PackageError(f"archive {source} has an unsafe member: {exc}") from exc
+            members = archive.getmembers()
+            names = tuple(member.name for member in members)
+            links = tuple(member.name for member in members if member.issym() or member.islnk())
+            _check_members(root, names, links=links, overwrite=overwrite)
+            for member in members:
+                try:
+                    tarfile.data_filter(member, str(root))
+                except tarfile.FilterError as exc:
+                    raise PackageError(f"archive {source} has an unsafe member {member.name}: {exc}") from exc
+            archive.extractall(root, filter="data")
         return names
     if zipfile.is_zipfile(source):
         with zipfile.ZipFile(source) as archive:
-            names = tuple(archive.namelist())
-            _check_members(root, names, overwrite=overwrite)
-            archive.extractall(destination)
+            infos = archive.infolist()
+            names = tuple(info.filename for info in infos)
+            links = tuple(info.filename for info in infos if stat.S_ISLNK(info.external_attr >> 16))
+            _check_members(root, names, links=links, overwrite=overwrite)
+            archive.extractall(root)
         return names
     raise PackageError(f"not a tar or zip archive: {source}")
 
 
-def _check_members(root: Path, names: tuple[str, ...], *, overwrite: bool) -> None:
+def _check_members(root: Path, names: tuple[str, ...], *, links: tuple[str, ...], overwrite: bool) -> None:
+    if links:
+        raise PackageError("archive contains links, which are not supported: " + ", ".join(links))
+    seen: set[str] = set()
     for name in names:
+        key = name.rstrip("/").lower()
+        if key in seen:
+            raise PackageError(f"archive names the same path twice: {name}")
+        seen.add(key)
         target = (root / name).resolve()
         if target != root and root not in target.parents:
             raise PackageError(f"archive member escapes the destination: {name}")

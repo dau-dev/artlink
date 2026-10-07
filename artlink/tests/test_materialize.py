@@ -144,3 +144,25 @@ def test_materialization_refuses_to_overwrite_an_existing_destination_unless_ask
         execute_materialization_plan(symlink_plan)
     execute_materialization_plan(symlink_plan, overwrite=True)
     assert existing.is_symlink()
+
+
+def test_materialization_refuses_a_destination_under_a_symlinked_directory(tmp_path: Path) -> None:
+    """A symlink already inside the target directory must not turn a relative
+    destination into a write somewhere else."""
+    package_dir = tmp_path / "package"
+    (package_dir / "sub").mkdir(parents=True)
+    (package_dir / "sub" / "file.txt").write_text("payload\n", encoding="utf-8")
+    manifest = Manifest(name="source", artifacts=(Artifact(id="f", path=Path("sub/file.txt"), role="data"),))
+    project = Manifest(name="project", references=(Reference(kind="manifest", target="source"),))
+    registry = ArtifactRegistry.from_manifests((manifest,), root=package_dir)
+    resolution = resolve_manifest(project, registry)
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    target = tmp_path / "target"
+    target.mkdir()
+    (target / "sub").symlink_to(outside, target_is_directory=True)
+
+    plan = build_materialization_plan(resolution, registry, target_dir=target)
+    with pytest.raises(MaterializationError, match="resolves outside the target directory"):
+        execute_materialization_plan(plan)
+    assert not (outside / "file.txt").exists()

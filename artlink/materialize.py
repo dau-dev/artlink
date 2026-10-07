@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import shutil
 from importlib import resources
 from pathlib import Path
@@ -80,7 +81,7 @@ def execute_materialization_plan(plan: MaterializationPlan, *, overwrite: bool =
     """Perform the plan's local actions. A destination that already exists is
     refused unless ``overwrite`` is set; remote references are left alone."""
     for action in plan.actions:
-        _execute_action(action, overwrite=overwrite)
+        _execute_action(action, target_dir=plan.target_dir, overwrite=overwrite)
     return MaterializationResult(actions=plan.actions)
 
 
@@ -156,11 +157,12 @@ def _destination_for_package_uri(target_dir: Path, uri: str) -> Path:
     return target_dir / resource_path.name
 
 
-def _execute_action(action: MaterializationAction, *, overwrite: bool) -> None:
+def _execute_action(action: MaterializationAction, *, target_dir: Path, overwrite: bool) -> None:
     if action.method == "reference":
         return
     if action.destination is None:
         raise MaterializationError(f"materialization action requires a destination: {action.artifact_id}")
+    _confine(action.destination, target_dir)
     if action.method == "copy":
         _copy_path(Path(action.source), action.destination, overwrite=overwrite)
         return
@@ -180,6 +182,15 @@ def _execute_action(action: MaterializationAction, *, overwrite: bool) -> None:
     raise MaterializationError(f"unsupported materialization method: {action.method}")
 
 
+def _confine(destination: Path, target_dir: Path) -> None:
+    """The destination, with any existing symlinked ancestor followed, must
+    still lie under the target directory."""
+    root = target_dir.resolve(strict=False)
+    resolved = destination.resolve(strict=False)
+    if resolved != root and root not in resolved.parents:
+        raise MaterializationError(f"destination {destination} resolves outside the target directory {root}: {resolved}")
+
+
 def _refuse_existing(destination: Path, *, overwrite: bool) -> None:
     if not overwrite and (destination.exists() or destination.is_symlink()):
         raise MaterializationError(f"refusing to overwrite {destination}; pass overwrite to replace it")
@@ -191,15 +202,28 @@ def _copy_path(source: Path, destination: Path, *, overwrite: bool) -> None:
     if source.is_dir():
         shutil.copytree(source, destination, dirs_exist_ok=overwrite)
         return
-    shutil.copy2(source, destination)
+    # the file is created exclusively (or truncated when overwriting) without
+    # following a link at the destination, so a path that appears between the
+    # check and the write is an error rather than a redirected write
+    flags = os.O_WRONLY | os.O_CREAT | os.O_NOFOLLOW | (os.O_TRUNC if overwrite else os.O_EXCL)
+    try:
+        fd = os.open(destination, flags, 0o644)
+    except FileExistsError as exc:
+        raise MaterializationError(f"refusing to overwrite {destination}; pass overwrite to replace it") from exc
+    with open(fd, "wb") as out, source.open("rb") as inp:
+        shutil.copyfileobj(inp, out)
+    shutil.copystat(source, destination)
 
 
 def _symlink_path(source: Path, destination: Path, *, overwrite: bool) -> None:
     _refuse_existing(destination, overwrite=overwrite)
     destination.parent.mkdir(parents=True, exist_ok=True)
-    if destination.exists() or destination.is_symlink():
+    if overwrite and (destination.exists() or destination.is_symlink()):
         destination.unlink()
-    destination.symlink_to(source, target_is_directory=source.is_dir())
+    try:
+        destination.symlink_to(source, target_is_directory=source.is_dir())
+    except FileExistsError as exc:
+        raise MaterializationError(f"refusing to overwrite {destination}; pass overwrite to replace it") from exc
 
 
 def _copy_package_resource(uri: str, destination: Path, *, overwrite: bool) -> None:
