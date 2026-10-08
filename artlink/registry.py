@@ -297,11 +297,13 @@ class ArtifactRegistry(_ArtlinkModel):
         artifact_path = entry.artifact.path
         if artifact_path is None:
             raise RegistryError(f"artifact has no filesystem path: {entry.artifact.display_id}")
+        if artifact_path.is_absolute():
+            raise RegistryError(f"artifact path is absolute; a registry resolves paths against the manifest root only: {artifact_path.as_posix()}")
         if entry.root is None:
             return artifact_path
-        # the path is lexically confined at construction; a symlinked directory
-        # under the root could still lead outside it, so the resolved path is
-        # checked against the resolved root
+        # the path cannot climb lexically; a symlinked directory under the
+        # root could still lead outside it, so the resolved path is checked
+        # against the resolved root
         root = entry.root.resolve(strict=False)
         resolved = (root / artifact_path).resolve(strict=False)
         if resolved != root and root not in resolved.parents:
