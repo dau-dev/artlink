@@ -43,11 +43,33 @@ def test_artifact_declares_exactly_one_location() -> None:
     assert Artifact(uri="https://example.invalid/a.txt", role="data").location == "https://example.invalid/a.txt"
 
 
-def test_artifact_paths_stay_inside_the_manifest_root() -> None:
+def test_artifact_paths_do_not_climb_out_of_the_manifest_root() -> None:
     """An installed manifest that could point at ../../etc would make every
     registry a pointer to anywhere on the host."""
-    for bad in ("/etc/passwd", "../sibling/payload.txt", "a/../../b"):
-        with pytest.raises(ManifestError, match="stay inside its manifest root"):
+    for bad in ("../sibling/payload.txt", "a/../../b"):
+        with pytest.raises(ManifestError, match="must not climb"):
             Artifact(path=Path(bad), role="data")
-    with pytest.raises(ManifestError, match="stay inside its manifest root"):
+    with pytest.raises(ManifestError, match="must not climb"):
         Manifest(name="m", artifacts=({"path": "../x", "role": "data"},))
+
+
+def test_an_absolute_path_is_carried_but_never_acted_on(tmp_path: Path) -> None:
+    """Build tools record where an output landed on this host; the model keeps
+    that, and every place artlink would read, copy or pack the file refuses."""
+    from artlink import ArtifactRegistry, PackageError, RegistryError, build_materialization_plan, build_package_archive, resolve_manifest
+    from artlink.materialize import MaterializationError
+
+    payload = tmp_path / "payload.bit"
+    payload.write_bytes(b"x")
+    manifest = Manifest(name="built", version="1", artifacts=(Artifact(id="bit", path=payload, role="bitstream"),))
+    assert manifest.artifacts[0].path == payload
+
+    registry = ArtifactRegistry.from_manifests((manifest,), root=tmp_path)
+    with pytest.raises(RegistryError, match="absolute"):
+        registry.artifact_file_path(registry.find_artifacts(role="bitstream")[0])
+    with pytest.raises(PackageError, match="absolute"):
+        build_package_archive(manifest, artifact_root=tmp_path, output_dir=tmp_path / "dist", package_type="hdl")
+
+    resolution = resolve_manifest(Manifest(name="p", references=(Reference(kind="manifest", target="built"),)), registry)
+    with pytest.raises(MaterializationError, match="absolute"):
+        build_materialization_plan(resolution, registry, target_dir=tmp_path / "out")

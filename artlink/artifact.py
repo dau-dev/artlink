@@ -186,12 +186,13 @@ class Artifact(_ManifestModel):
 
     @field_validator("path")
     @classmethod
-    def _validate_path_stays_in_root(cls, value: Path | None) -> Path | None:
-        """An artifact path is read relative to its manifest; one that is
-        absolute or climbs out of that directory would make the manifest a
-        pointer to anywhere on the host."""
-        if value is not None and (value.is_absolute() or ".." in value.parts):
-            raise ValueError(f"artifact path must be relative and stay inside its manifest root: {value.as_posix()}")
+    def _validate_path_does_not_climb(cls, value: Path | None) -> Path | None:
+        """A relative artifact path is read against its manifest root and may
+        not climb out of it. An absolute path names a file on this host; the
+        model carries it (build tools record where an output landed) but the
+        registry, materialization and packaging refuse to act on one."""
+        if value is not None and ".." in value.parts:
+            raise ValueError(f"artifact path must not climb out of its manifest root: {value.as_posix()}")
         return value
 
     @field_validator("uri", "kind", "role", mode="before")

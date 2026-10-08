@@ -81,6 +81,8 @@ def build_package_archive(
         for artifact in packaged_manifest.artifacts:
             if artifact.path is None:
                 continue
+            if artifact.path.is_absolute():
+                raise PackageError(f"artifact path is absolute; a package carries paths relative to its manifest only: {artifact.path.as_posix()}")
             source = Path(artifact_root) / artifact.path
             if not source.exists():
                 raise PackageError(f"missing artifact path: {source}")
