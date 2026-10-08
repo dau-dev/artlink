@@ -41,6 +41,7 @@ develop = [
     "check-dist",
     "codespell",
     "hatchling",
+    "jsonschema",
     "mdformat",
     "mdformat-tables>=1",
     "pytest",
