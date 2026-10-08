@@ -13,7 +13,7 @@ A package for packaging, organizing, and combining artifacts
 
 The current core schemas are:
 
-- `artlink.manifest/v0` for artifact manifests.
+- `artlink.manifest/v0` for artifact manifests; its JSON Schema is published at `artlink/schemas/artlink.manifest-v0.json` and `artlink.manifest_json_schema()` returns the same document.
 - `artlink.template/v0` for declarative manifest validation templates.
 - `artlink.registry/v0` for registry configuration.
 
@@ -252,6 +252,8 @@ def manifest_paths():
 Each entry point may load a `Manifest`, a manifest file path, a callable returning either of those, or an iterable containing any of those values. When an entry point returns a manifest file path, relative artifact paths are resolved from that manifest file's directory.
 
 By default, a registry rejects multiple manifests with the same name. This is useful for ecosystems such as Python where one installed distribution should own a package name. Hardware package managers often need multiple versions of a reusable block side by side, so they can opt in with `ArtifactRegistry(allow_manifest_versions=True)` or `ArtifactRegistry.from_install_path(prefix, allow_manifest_versions=True)`. Versioned registries resolve `Reference(kind="manifest", target="hdl-filter", version="2.0.0")`; an unversioned reference is rejected if more than one version is available.
+
+With `manifest_version_policy="highest"`, an unversioned reference to a name with several versions resolves to the highest one, where versions are compared by splitting the string into runs of digits and runs of other characters: digit runs compare as integers (so `1.10` is above `1.9`), other runs compare as text, a digit run sorts below a text run at the same position, and a version with more runs sorts above its prefix (so `2.0.0-rc1` is above `2.0.0`). This is a lexical rule, not a release-aware one; artifact ecosystems with pre-release conventions should pin versions in their references.
 
 Registry YAML is a tool configuration file, not an artifact manifest. Its job is to tell a consuming process which install roots, manifest files, template files, and direct local artifacts should be visible in an `ArtifactRegistry`. `load_registry(path)` resolves relative `install_roots`, `manifest_files`, `template_files`, and direct artifact roots relative to the registry config file.
 

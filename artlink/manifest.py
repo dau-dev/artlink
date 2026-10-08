@@ -10,15 +10,19 @@ from .artifact import Artifact, ManifestError, Reference, _ManifestModel
 
 __all__ = (
     "ARTLINK_MANIFEST_SCHEMA",
+    "MANIFEST_JSON_SCHEMA_PATH",
     "Manifest",
     "artifact_path",
     "load_manifest",
     "manifest_from_mapping",
+    "manifest_json_schema",
     "validate_artifact_files",
 )
 
 
 ARTLINK_MANIFEST_SCHEMA = "artlink.manifest/v0"
+# the published JSON Schema for that schema id; a test holds it equal to the model
+MANIFEST_JSON_SCHEMA_PATH = Path(__file__).resolve().parent / "schemas" / "artlink.manifest-v0.json"
 
 
 class Manifest(_ManifestModel):
@@ -70,6 +74,15 @@ class Manifest(_ManifestModel):
 
     def to_yaml_text(self) -> str:
         return yaml.safe_dump(self.model_dump(mode="json"), sort_keys=False)
+
+
+def manifest_json_schema() -> dict[str, Any]:
+    """The JSON Schema of ``artlink.manifest/v0`` as the ``Manifest`` model
+    defines it, keyed by the yaml field names."""
+    schema = Manifest.model_json_schema(by_alias=True)
+    schema["$schema"] = "https://json-schema.org/draft/2020-12/schema"
+    schema["$id"] = "https://github.com/dau-dev/artlink/blob/main/artlink/schemas/artlink.manifest-v0.json"
+    return schema
 
 
 def load_manifest(path: Path, *, validate_paths: bool = False, root: Path | None = None) -> Manifest:
