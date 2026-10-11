@@ -25,16 +25,16 @@ lint-py:  ## lint python with ruff
 	python -m ruff format --check artlink
 
 lint-docs:  ## lint docs with mdformat and codespell
-	python -m mdformat --check README.md 
-	python -m codespell_lib README.md 
+	python -m mdformat --check README.md $(wildcard docs/src) 
+	python -m codespell_lib README.md $(wildcard docs/src) 
 
 fix-py:  ## autoformat python code with ruff
 	python -m ruff check --fix artlink
 	python -m ruff format artlink
 
 fix-docs:  ## autoformat docs with mdformat and codespell
-	python -m mdformat README.md 
-	python -m codespell_lib --write README.md 
+	python -m mdformat README.md $(wildcard docs/src) 
+	python -m codespell_lib --write README.md $(wildcard docs/src) 
 
 lint: lint-py lint-docs  ## run all linters
 lints: lint
